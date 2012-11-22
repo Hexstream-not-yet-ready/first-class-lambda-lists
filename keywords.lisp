@@ -1,5 +1,34 @@
 (in-package #:first-class-lambda-keywords)
 
+(defclass fc-lk:keyword () ())
+
+(defgeneric fc-lk:name (lambda-keyword))
+
+(defgeneric fc-lk:arity (lambda-keyword)
+  (:method ((lambda-keyword fc-lk:keyword))
+    (values 0 nil)))
+
+(defgeneric fc-lk:introducer (lambda-keyword)
+  (:method ((lambda-keyword fc-lk:keyword))
+    (fc-lk:name lambda-keyword)))
+
+(defgeneric fc-lk:specializerp (lambda-keyword))
+
+(defgeneric fc-lk:default (lambda-keyword)
+  (:method ((lambda-keyword fc-lk:keyword))
+    (values nil nil)))
+(defun fc-lk:defaultp (lambda-keyword)
+  (nth-value 1 (fc-lk:default lambda-keyword)))
+
+(defgeneric fc-lk:suppliedp (lambda-keyword)
+  (:method ((lambda-keyword fc-lk:keyword))
+    (fc-lk:defaultp lambda-keyword)))
+
+(defgeneric fc-lk:keyword-name-p (lambda-keyword)
+  (:method ((lambda-keyword fc-lk:keyword))
+    nil))
+
+
 (defmacro fc-lk:define (name &body options)
   (declare (ignore name options)))
 
@@ -14,38 +43,32 @@
 
 
 (fc-lk:define &whole
-  (:min-arguments 1)
-  (:max-arguments 1))
+  (:arity 1))
 
 (fc-lk:define &environment
-  (:min-arguments 1)
-  (:max-arguments 1))
+  (:arity 1))
 
 (fc-lk:define :required
-  (:introducer nil)
-  (:min-clusters 1))
+  (:introducer nil))
 
 (fc-lk:define &optional
-  (:defaultp t)
-  (:suppliedp t))
+  (:default nil))
 
 (fc-lk:define &rest
-  (:min-arguments 1)
-  (:max-arguments 1))
+  (:arity 1))
 (fc-lk:define &body
-  (:min-arguments 1)
-  (:max-arguments 1))
+  (:arity 1))
 (fc-lk:conflicts (&rest &body))
 
-(fc-lk:define &key ()
-  (:defaultp t)
-  (:suppliedp t))
+(fc-lk:define &key
+  (:default nil))
 (fc-lk:define &allow-other-keys
+  (:arity 0)
   (:top-level-p nil))
 (fc-lk:modifies (&allow-other-keys &key))
 
 (fc-lk:define &aux
-  )
+  (:default nil))
 
 
 (fc-lk:precedes (&whole &environment))

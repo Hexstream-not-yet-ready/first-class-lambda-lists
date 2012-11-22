@@ -1,11 +1,22 @@
 (cl:defpackage #:first-class-lambda-keywords
-  (:nicknames #:fc-lk)
+  (:nicknames #:fc-lk #:fc-lambda-keywords #:fc-lambda-keyword)
   (:use #:cl)
-  (:export #:define
+  (:shadow #:keyword)
+  (:export #:keyword
+           #:name
+           #:arity
+           #:introducer
+           #:specializerp
+           #:default
+           #:defaultp
+           #:suppliedp
+           #:keyword-name-p
+
+           #:define
            #:conflicts
            #:precedes
            #:modifies))
 
 (cl:defpackage #:first-class-lambda-lists
-  (:nicknames #:fc-ll)
+  (:nicknames #:fc-ll #:fc-lambda-lists)
   (:use #:cl))
