@@ -12,4 +12,5 @@
   :version "1.0"
   :serial cl:t
   :components ((:file "package")
-	       (:file "main")))
+               (:file "keywords")
+               (:file "lists")))
