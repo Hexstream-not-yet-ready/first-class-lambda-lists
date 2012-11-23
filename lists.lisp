@@ -10,18 +10,21 @@
 (fc-ll:define lambda (:required &optional &rest &key &allow-other-keys &aux)
   (:namestring "ordinary"))
 
-(fc-ll:define generic-function ((:include lambda
-                                          (:except &aux)
-                                          (:override (&optional :defaultp nil)
-                                                     (&key :defaultp nil))))
+(fc-ll:define generic-function ((:overriding ((t :defaultp nil))
+                                             (:include lambda
+                                                       (:except &aux))))
   (:namestring "generic function"))
 
-(fc-ll:define method ((:include lambda
-                                (:override (:required :specializerp t))))
+(fc-ll:define method ((:overriding ((:required :specializerp t))
+                                   (:include lambda)))
   (:namestring "specialized"))
 
-(fc-ll:define macro ((:include lambda) ;; recursive
-                     &whole &environment))
+(fc-ll:define destructuring-bind ((:include lambda) ;; recursive
+                                  &whole &body)
+  (:namestring "destructuring"))
+
+(fc-ll:define macro ((:include destructuring-bind)
+                     &environment))
 
 (fc-ll:define defstruct ((:include lambda))
   (:namestring "boa"))
@@ -30,9 +33,8 @@
                                  (:except &aux))
                        &environment))
 
-(fc-ll:define deftype ((:include macro
-                                 (:override (&optional :default '*)
-                                            (&key :default '*)))))
+(fc-ll:define deftype ((:overriding ((t :default '*))
+                                    (:include macro))))
 
 (fc-ll:define define-modify-macro (&optional &rest))
 

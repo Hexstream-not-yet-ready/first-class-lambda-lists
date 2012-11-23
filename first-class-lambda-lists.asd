@@ -7,7 +7,7 @@
 
   :description "To be described."
 
-  :depends-on ()
+  :depends-on (#:incognito-keywords)
 
   :version "1.0"
   :serial cl:t

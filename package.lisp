@@ -17,6 +17,17 @@
            #:precedes
            #:modifies))
 
+(ikeywords:defpackage #:first-class-lambda-keywords.extended
+  (:nicknames #:fc-ll.extended)
+  (:export #:&transform
+           #:&doc
+           #:&decl
+           #:&rest+
+           #:&body+
+           #:&head
+           #:&tail
+           #:&destructure))
+
 (cl:defpackage #:first-class-lambda-lists
   (:nicknames #:fc-ll #:fc-lambda-lists)
   (:use #:cl)
