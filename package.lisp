@@ -19,4 +19,7 @@
 
 (cl:defpackage #:first-class-lambda-lists
   (:nicknames #:fc-ll #:fc-lambda-lists)
-  (:use #:cl))
+  (:use #:cl)
+  (:shadow #:list)
+  (:export #:list
+           #:define))

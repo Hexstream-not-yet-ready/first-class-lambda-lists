@@ -32,8 +32,8 @@
 (defmacro fc-lk:define (name &body options)
   (declare (ignore name options)))
 
-(defmacro fc-lk:conflicts ((first-lambda-keyword second-lambda-keyword))
-  (declare (ignore first-lambda-keyword second-lambda-keyword)))
+(defmacro fc-lk:conflicts ((&rest lambda-keywords))
+  (declare (ignore lambda-keywords)))
 
 (defmacro fc-lk:precedes ((first-lambda-keyword second-lambda-keyword))
   (declare (ignore first-lambda-keyword second-lambda-keyword)))
@@ -41,6 +41,8 @@
 (defmacro fc-lk:modifies ((flag-lambda-keyword modified-lambda-keyword))
   (declare (ignore flag-lambda-keyword modified-lambda-keyword)))
 
+
+;;; Standard lambda list keywords.
 
 (fc-lk:define &whole
   (:arity 1))
@@ -79,3 +81,20 @@
 (fc-lk:precedes (&rest &key))
 (fc-lk:precedes (&body &key))
 (fc-lk:precedes (&key &aux))
+
+
+;;; "Extended" lambda list keywords
+
+(fc-lk:define &transform)
+
+(fc-lk:define &doc)
+(fc-lk:define &decl)
+
+(fc-lk:define &rest+)
+(fc-lk:define &body+)
+(fc-lk:conflicts (&rest+ &body+ &rest &body))
+
+(fc-lk:define &head)
+(fc-lk:define &tail)
+
+(fc-lk:define &destructure)
