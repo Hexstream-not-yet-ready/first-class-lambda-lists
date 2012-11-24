@@ -1,6 +1,18 @@
+(ikeywords:defpackage #:first-class-lambda-keywords.extended
+  (:nicknames #:fc-lk.extended)
+  (:export #:&transform
+           #:&doc
+           #:&decl
+           #:&rest+
+           #:&body+
+           #:&head
+           #:&tail
+           #:&destructure))
+
 (cl:defpackage #:first-class-lambda-keywords
   (:nicknames #:fc-lk #:fc-lambda-keywords #:fc-lambda-keyword)
-  (:use #:cl)
+  (:use #:cl
+        #:fc-lk.extended)
   (:shadow #:keyword)
   (:export #:keyword
            #:name
@@ -16,17 +28,6 @@
            #:conflicts
            #:precedes
            #:modifies))
-
-(ikeywords:defpackage #:first-class-lambda-keywords.extended
-  (:nicknames #:fc-ll.extended)
-  (:export #:&transform
-           #:&doc
-           #:&decl
-           #:&rest+
-           #:&body+
-           #:&head
-           #:&tail
-           #:&destructure))
 
 (cl:defpackage #:first-class-lambda-lists
   (:nicknames #:fc-ll #:fc-lambda-lists)
