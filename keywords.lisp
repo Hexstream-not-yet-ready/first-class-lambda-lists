@@ -28,17 +28,25 @@
   (:method ((lambda-keyword fc-lk:keyword))
     nil))
 
+(defgeneric fc-lk:conflicts (lambda-keyword))
+(defgeneric fc-lk:order (lambda-keyword))
+(defun fc-lk:precedes (lambda-keyword)
+  (identity (fc-lk:order lambda-keyword)))
+(defun fc-lk:follows (lambda-keyword)
+  (nth-value 1 (fc-lk:order lambda-keyword)))
+(defgeneric fc-lk:modifies (lambda-keyword))
+
 
 (defmacro fc-lk:define (name &body options)
   (declare (ignore name options)))
 
-(defmacro fc-lk:conflicts ((&rest lambda-keywords))
+(defmacro fc-lk:define-conflicts ((&rest lambda-keywords))
   (declare (ignore lambda-keywords)))
 
-(defmacro fc-lk:precedes ((first-lambda-keyword second-lambda-keyword))
-  (declare (ignore first-lambda-keyword second-lambda-keyword)))
+(defmacro fc-lk:define-order ((&rest lambda-keywords))
+  (declare (ignore lambda-keywords)))
 
-(defmacro fc-lk:modifies ((flag-lambda-keyword modified-lambda-keyword))
+(defmacro fc-lk:define-modifies ((flag-lambda-keyword modified-lambda-keyword))
   (declare (ignore flag-lambda-keyword modified-lambda-keyword)))
 
 
@@ -59,28 +67,21 @@
 (fc-lk:define &rest
   (:arity 1))
 (fc-lk:define &body
-  (:arity 1))
-(fc-lk:conflicts (&rest &body))
+  (:alias-for &rest))
 
 (fc-lk:define &key
   (:default nil))
 (fc-lk:define &allow-other-keys
   (:arity 0)
   (:top-level-p nil))
-(fc-lk:modifies (&allow-other-keys &key))
+(fc-lk:define-modifies (&allow-other-keys &key))
 
 (fc-lk:define &aux
   (:default nil))
 
 
-(fc-lk:precedes (&whole &environment))
-(fc-lk:precedes (&whole :required))
-(fc-lk:precedes (:required &optional))
-(fc-lk:precedes (&optional &rest))
-(fc-lk:precedes (&optional &body))
-(fc-lk:precedes (&rest &key))
-(fc-lk:precedes (&body &key))
-(fc-lk:precedes (&key &aux))
+(fc-lk:define-order (&whole :required &optional &rest &key &aux))
+(fc-lk:define-order (&whole &environment))
 
 
 ;;; "Extended" lambda list keywords
@@ -89,10 +90,12 @@
 
 (fc-lk:define &doc)
 (fc-lk:define &decl)
+(fc-lk:define-order ((or &doc &decl) &rest (:followers &rest)))
 
 (fc-lk:define &rest+)
-(fc-lk:define &body+)
-(fc-lk:conflicts (&rest+ &body+ &rest &body))
+(fc-lk:define &body+
+  (:alias-for &rest+))
+(fc-lk:define-conflicts (&rest+ &rest))
 
 (fc-lk:define &head)
 (fc-lk:define &tail)

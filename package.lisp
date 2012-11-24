@@ -25,8 +25,14 @@
            #:keyword-name-p
 
            #:define
+           #:define-conflicts
+           #:define-order
+           #:define-modifies
+
            #:conflicts
+           #:order
            #:precedes
+           #:follows
            #:modifies))
 
 (cl:defpackage #:first-class-lambda-lists
