@@ -31,9 +31,10 @@
 
            #:conflicts
            #:order
-           #:precedes
-           #:follows
-           #:modifies))
+           #:before
+           #:after
+           #:modifiers
+           #:modified-by))
 
 (cl:defpackage #:first-class-lambda-lists
   (:nicknames #:fc-ll #:fc-lambda-lists)

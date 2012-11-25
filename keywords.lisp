@@ -28,13 +28,21 @@
   (:method ((lambda-keyword fc-lk:keyword))
     nil))
 
-(defgeneric fc-lk:conflicts (lambda-keyword))
-(defgeneric fc-lk:order (lambda-keyword))
-(defun fc-lk:precedes (lambda-keyword)
+(defgeneric fc-lk:conflicts (lambda-keyword)
+  (:method ((lambda-keyword fc-lk:keyword))
+    nil))
+(defgeneric fc-lk:order (lambda-keyword)
+  (:method ((lambda-keyword fc-lk:keyword))
+    (values nil nil)))
+(defun fc-lk:before (lambda-keyword)
   (identity (fc-lk:order lambda-keyword)))
-(defun fc-lk:follows (lambda-keyword)
+(defun fc-lk:after (lambda-keyword)
   (nth-value 1 (fc-lk:order lambda-keyword)))
-(defgeneric fc-lk:modifies (lambda-keyword))
+(defgeneric fc-lk:modifiers (lambda-keyword)
+  (:method ((lambda-keyword fc-lk:keyword))
+    (values nil nil)))
+(defun fc-lk:modified-by (lambda-keyword)
+  (nth-value 1 (fc-lk:modifiers lambda-keyword)))
 
 
 (defmacro fc-lk:define (name &body options)
@@ -90,7 +98,7 @@
 
 (fc-lk:define &doc)
 (fc-lk:define &decl)
-(fc-lk:define-order ((or &doc &decl) &rest (:followers &rest)))
+(fc-lk:define-order ((or &doc &decl) &rest (:after &rest)))
 
 (fc-lk:define &rest+)
 (fc-lk:define &body+
