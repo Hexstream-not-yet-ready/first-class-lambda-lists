@@ -2,11 +2,36 @@
 
 (defclass fc-lk:keyword () ())
 
+
 (defgeneric fc-lk:name (lambda-keyword))
 
-(defgeneric fc-lk:arity (lambda-keyword)
-  (:method ((lambda-keyword fc-lk:keyword))
-    (values 0 nil)))
+(defclass fc-lk:name-mixin ()
+  ((%name :initarg :name
+          :reader fc-lk:name
+          :type symbol)))
+
+
+(defgeneric fc-lk:arity (lambda-keyword))
+
+(deftype %arity ()
+  '(cons (integer 0) (cons (or (integer 0) null) null)))
+
+(defclass fc-lk:arity-mixin ()
+  ((%arity :type %arity
+           :initform (list 0 nil))))
+
+(defmethod fc-lk:arity ((mixin fc-lk:arity-mixin))
+  (destructuring-bind (min max) (slot-value mixin '%arity)
+    (values min max)))
+
+(defmethod shared-initialize :after ((mixin fc-lk:arity-mixin) slot-names &key (arity nil arityp))
+  (when arityp
+    (setf (slot-value mixin '%arity)
+          (etypecase arity
+            ((integer 0)
+             (list arity arity))
+            (%arity arity)))))
+
 
 (defgeneric fc-lk:introducer (lambda-keyword)
   (:method ((lambda-keyword fc-lk:keyword))
@@ -43,6 +68,10 @@
     (values nil nil)))
 (defun fc-lk:modified-by (lambda-keyword)
   (nth-value 1 (fc-lk:modifiers lambda-keyword)))
+
+
+(defclass standard-keyword (fc-lk:name-mixin fc-lk:arity-mixin)
+  ())
 
 
 (defmacro fc-lk:define (name &body options)
@@ -86,6 +115,8 @@
 
 (fc-lk:define &aux
   (:default nil))
+
+;; Other options: (:defaultp :specializerp :recurse)
 
 
 (fc-lk:define-order (&whole :required &optional &rest &key &aux))

@@ -16,7 +16,9 @@
   (:shadow #:keyword)
   (:export #:keyword
            #:name
+           #:name-mixin
            #:arity
+           #:arity-mixin
            #:introducer
            #:specializerp
            #:default
