@@ -8,7 +8,7 @@
 (defclass fc-lk:name-mixin ()
   ((%name :initarg :name
           :reader fc-lk:name
-          :type symbol)))
+          :type (and symbol (not null)))))
 
 
 (defgeneric fc-lk:arity (lambda-keyword))
@@ -24,7 +24,8 @@
   (destructuring-bind (min max) (slot-value mixin '%arity)
     (values min max)))
 
-(defmethod shared-initialize :after ((mixin fc-lk:arity-mixin) slot-names &key (arity nil arityp))
+(defmethod shared-initialize :after ((mixin fc-lk:arity-mixin) slot-names
+                                     &key (arity nil arityp))
   (when arityp
     (setf (slot-value mixin '%arity)
           (etypecase arity
@@ -37,17 +38,48 @@
   (:method ((lambda-keyword fc-lk:keyword))
     (fc-lk:name lambda-keyword)))
 
+(defclass fc-lk:introducer-mixin ()
+  ((%introducer :initarg :introducer
+                :type symbol)))
+
+(defmethod fc-lk:introducer ((mixin fc-lk:introducer-mixin))
+  (if (slot-boundp mixin '%introducer)
+      (slot-value mixin '%introducer)
+      (call-next-method)))
+
+
 (defgeneric fc-lk:specializerp (lambda-keyword))
 
-(defgeneric fc-lk:default (lambda-keyword)
-  (:method ((lambda-keyword fc-lk:keyword))
-    (values nil nil)))
+(defclass fc-lk:specializerp-mixin ()
+  ((%specializerp :initarg :specializerp
+                  :reader fc-lk:specializerp)))
+
+
+(defgeneric fc-lk:default (lambda-keyword))
+
 (defun fc-lk:defaultp (lambda-keyword)
   (nth-value 1 (fc-lk:default lambda-keyword)))
+
+(defclass fc-lk:default-mixin ()
+  ((%default :initarg :default)))
+
+(defmethod fc-lk:default ((mixin fc-lk:default-mixin))
+  (if (slot-boundp mixin '%default)
+      (values (slot-value mixin '%default) t)
+      (values nil nil)))
+
+(defmethod shared-initialize :after ((mixin fc-lk:default-mixin) slot-names
+                                     &key (defaultp nil defaultpp))
+  (when defaultpp
+    (if defaultp
+        (unless (slot-boundp mixin '%default)
+          (setf (slot-value mixin '%default) nil))
+        (slot-makunbound mixin '%default))))
 
 (defgeneric fc-lk:suppliedp (lambda-keyword)
   (:method ((lambda-keyword fc-lk:keyword))
     (fc-lk:defaultp lambda-keyword)))
+
 
 (defgeneric fc-lk:keyword-name-p (lambda-keyword)
   (:method ((lambda-keyword fc-lk:keyword))
@@ -70,7 +102,11 @@
   (nth-value 1 (fc-lk:modifiers lambda-keyword)))
 
 
-(defclass standard-keyword (fc-lk:name-mixin fc-lk:arity-mixin)
+(defclass standard-keyword (fc-lk:name-mixin
+                            fc-lk:arity-mixin
+                            fc-lk:introducer-mixin
+                            fc-lk:specializerp-mixin
+                            fc-lk:default-mixin)
   ())
 
 

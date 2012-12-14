@@ -20,9 +20,12 @@
            #:arity
            #:arity-mixin
            #:introducer
+           #:introducer-mixin
            #:specializerp
+           #:specializerp-mixin
            #:default
            #:defaultp
+           #:default-mixin
            #:suppliedp
            #:keyword-name-p
 
