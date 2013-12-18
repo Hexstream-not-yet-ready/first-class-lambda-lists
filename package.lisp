@@ -28,6 +28,9 @@
            #:default-mixin
            #:suppliedp
            #:keyword-name-p
+           #:keyword-name-p-mixin
+           #:conflicts
+           #:conflicts-mixin
 
            #:define
            #:define-conflicts

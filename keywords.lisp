@@ -81,20 +81,30 @@
     (fc-lk:defaultp lambda-keyword)))
 
 
-(defgeneric fc-lk:keyword-name-p (lambda-keyword)
-  (:method ((lambda-keyword fc-lk:keyword))
-    nil))
+(defgeneric fc-lk:keyword-name-p (lambda-keyword))
 
-(defgeneric fc-lk:conflicts (lambda-keyword)
-  (:method ((lambda-keyword fc-lk:keyword))
-    nil))
+(defclass fc-lk:keyword-name-p-mixin ()
+  ((%keyword-name-p :initarg :keyword-name-p
+                    :reader fc-lk:keyword-name-p)))
+
+
+(defgeneric fc-lk:conflicts (lambda-keyword))
+
+(defclass fc-lk:conflicts-mixin ()
+  ())
+
+
 (defgeneric fc-lk:order (lambda-keyword)
   (:method ((lambda-keyword fc-lk:keyword))
     (values nil nil)))
+
 (defun fc-lk:before (lambda-keyword)
   (identity (fc-lk:order lambda-keyword)))
+
 (defun fc-lk:after (lambda-keyword)
   (nth-value 1 (fc-lk:order lambda-keyword)))
+
+
 (defgeneric fc-lk:modifiers (lambda-keyword)
   (:method ((lambda-keyword fc-lk:keyword))
     (values nil nil)))
@@ -102,19 +112,21 @@
   (nth-value 1 (fc-lk:modifiers lambda-keyword)))
 
 
+;; Lazy way out, for now.
 (defclass standard-keyword (fc-lk:name-mixin
                             fc-lk:arity-mixin
                             fc-lk:introducer-mixin
                             fc-lk:specializerp-mixin
-                            fc-lk:default-mixin)
+                            fc-lk:default-mixin
+                            fc-lk:keyword-name-p-mixin)
   ())
 
 
 (defmacro fc-lk:define (name &body options)
   (declare (ignore name options)))
 
-(defmacro fc-lk:define-conflicts ((&rest lambda-keywords))
-  (declare (ignore lambda-keywords)))
+(defmacro fc-lk:define-conflicts (conflict-set-name (&rest lambda-keywords))
+  (declare (ignore conflict-set-name lambda-keywords)))
 
 (defmacro fc-lk:define-order ((&rest lambda-keywords))
   (declare (ignore lambda-keywords)))
@@ -170,7 +182,7 @@
 (fc-lk:define &rest+)
 (fc-lk:define &body+
   (:alias-for &rest+))
-(fc-lk:define-conflicts (&rest+ &rest))
+(fc-lk:define-conflicts &rest+ (&rest+ &rest))
 
 (fc-lk:define &head)
 (fc-lk:define &tail)
