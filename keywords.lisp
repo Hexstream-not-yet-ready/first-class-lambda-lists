@@ -173,8 +173,6 @@
 
 ;;; "Extended" lambda list keywords
 
-(fc-lk:define &transform)
-
 (fc-lk:define &doc)
 (fc-lk:define &decl)
 (fc-lk:define-order ((or &doc &decl) &rest (:after &rest)))
@@ -183,8 +181,3 @@
 (fc-lk:define &body+
   (:alias-for &rest+))
 (fc-lk:define-conflicts &rest+ (&rest+ &rest))
-
-(fc-lk:define &head)
-(fc-lk:define &tail)
-
-(fc-lk:define &destructure)

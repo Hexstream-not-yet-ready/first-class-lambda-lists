@@ -1,13 +1,9 @@
 (ikeywords:defpackage #:first-class-lambda-keywords.extended
   (:nicknames #:fc-lk.extended)
-  (:export #:&transform
-           #:&doc
+  (:export #:&doc
            #:&decl
            #:&rest+
-           #:&body+
-           #:&head
-           #:&tail
-           #:&destructure))
+           #:&body+))
 
 (cl:defpackage #:first-class-lambda-keywords
   (:nicknames #:fc-lk #:fc-lambda-keywords #:fc-lambda-keyword)
