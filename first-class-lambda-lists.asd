@@ -1,6 +1,6 @@
 (asdf:defsystem #:first-class-lambda-lists
 
-  :author "Jean-Philippe Paradis <hexstream@gmail.com>"
+  :author "Jean-Philippe Paradis <hexstream@hexstreamsoft.com>"
 
   ;; See the UNLICENSE file for details.
   :license "Public Domain"
@@ -9,8 +9,10 @@
 
   :depends-on (#:incognito-keywords)
 
-  :version "1.0"
+  :version "0.1"
   :serial cl:t
   :components ((:file "package")
                (:file "keywords")
-               (:file "lists")))
+               (:file "lists"))
+
+  :in-order-to ((asdf:test-op (asdf:test-op #:first-class-lambda-lists_tests))))
