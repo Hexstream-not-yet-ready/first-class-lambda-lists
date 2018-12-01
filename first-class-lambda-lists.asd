@@ -7,12 +7,12 @@
 
   :description "To be described."
 
-  :depends-on (#:incognito-keywords)
+  :depends-on ()
 
   :version "0.1"
   :serial cl:t
   :components ((:file "package")
-               (:file "keywords")
-               (:file "lists"))
+               (:file "lambda-list-keywords")
+               (:file "lambda-list-kinds"))
 
   :in-order-to ((asdf:test-op (asdf:test-op #:first-class-lambda-lists_tests))))
