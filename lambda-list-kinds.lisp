@@ -53,7 +53,10 @@
                :keywords (%derive-keywords-list :base :destructuring :add '(&environment))
                :recurse :destructuring)
 
-;; Boa lambda lists are syntactically the same as ordinary lambda lists.
+(make-instance 'fcll:standard-lambda-list-kind
+               :name :boa
+               :operator 'defstruct
+               :keywords (%derive-keywords-list))
 
 (make-instance 'fcll:standard-lambda-list-kind
                :name :defsetf
