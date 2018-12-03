@@ -27,7 +27,7 @@
 
 (define (fcll:lambda-list-keyword :required) t
   :introducer nil
-  :parameter-parser #'%parse-simple-parameter)
+  :parameter-parser #'%parse-required-parameter)
 
 (define (fcll:lambda-list-keyword :required-specializable) t
   :introducer nil

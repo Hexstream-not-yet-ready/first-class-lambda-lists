@@ -2,6 +2,11 @@
 
 (defclass parameter () ())
 
+(defclass parameter-variable-mixin ()
+  ((%variable :initarg :variable
+              :reader variable
+              :type symbol)))
+
 (defclass parameter-initform-mixin ()
   ((%initform :initarg :initform
               :reader initform
@@ -13,15 +18,23 @@
                         :type symbol
                         :initform nil)))
 
-(defclass simple-parameter (parameter)
+(defclass simple-parameter (parameter parameter-variable-mixin)
   ((%variable :initarg :variable
               :reader variable
               :type symbol)))
 
 (defun %parse-simple-parameter (parameter)
+  (check-type parameter symbol)
   (make-instance 'simple-parameter :variable parameter))
 
-(defclass specializable-parameter (simple-parameter)
+(defclass required-parameter (parameter parameter-variable-mixin)
+  ())
+
+(defun %parse-required-parameter (parameter)
+  (check-type parameter symbol)
+  (make-instance 'required-parameter :variable parameter))
+
+(defclass specializable-parameter (required-parameter)
   ((%specializer :initarg :specializer
                  :reader specializer
                  :initform nil)))
@@ -37,7 +50,7 @@
                    :variable variable
                    :specializer specializer)))
 
-(defclass optional-parameter (parameter parameter-initform-mixin parameter-suppliedp-variable-mixin)
+(defclass optional-parameter (parameter parameter-variable-mixin parameter-initform-mixin parameter-suppliedp-variable-mixin)
   ())
 
 (defun %parse-optional-parameter (parameter)
@@ -52,7 +65,7 @@
                    :initform initform
                    :suppliedp-variable suppliedp-variable)))
 
-(defclass aux-parameter (parameter parameter-initform-mixin)
+(defclass aux-parameter (parameter parameter-variable-mixin parameter-initform-mixin)
   ())
 
 (defun %parse-aux-parameter (parameter)
@@ -66,7 +79,7 @@
                    :variable variable
                    :initform initform)))
 
-(defclass key-parameter (parameter parameter-initform-mixin parameter-suppliedp-variable-mixin)
+(defclass key-parameter (parameter parameter-variable-mixin parameter-initform-mixin parameter-suppliedp-variable-mixin)
   ((%keyword-name :initarg :keyword-name
                   :reader keyword-name
                   :type symbol)))
