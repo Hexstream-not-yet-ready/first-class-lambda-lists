@@ -6,7 +6,12 @@
   ((%name :initarg :name
           :reader name)
    (%arity :initarg :arity
-           :reader arity)))
+           :reader arity)
+   (%introducer :initarg :introducer)))
+
+(defmethod shared-initialize :after ((instance fcll:standard-lambda-list-keyword) slot-names &key)
+  (unless (slot-boundp instance '%introducer)
+    (setf (slot-value instance '%introducer) (name instance))))
 
 (make-instance 'fcll:standard-lambda-list-keyword
                :name '&whole
@@ -18,11 +23,13 @@
 
 (make-instance 'fcll:standard-lambda-list-keyword
                :name :required
-               :arity t)
+               :arity t
+               :introducer nil)
 
 (make-instance 'fcll:standard-lambda-list-keyword
                :name :required-specializable
-               :arity t)
+               :arity t
+               :introducer nil)
 
 (make-instance 'fcll:standard-lambda-list-keyword
                :name '&optional
