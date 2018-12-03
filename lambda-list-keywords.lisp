@@ -21,29 +21,29 @@
               (1 #'%parse-simple-parameter)
               (t (error "Must supply a parameter-parser for arity ~S." arity)))))))
 
-(define (fcll:lambda-list-keyword &whole 1))
+(define (fcll:lambda-list-keyword &whole) 1)
 
-(define (fcll:lambda-list-keyword &environment 1))
+(define (fcll:lambda-list-keyword &environment) 1)
 
-(define (fcll:lambda-list-keyword :required t)
+(define (fcll:lambda-list-keyword :required) t
   :introducer nil
   :parameter-parser #'%parse-simple-parameter)
 
-(define (fcll:lambda-list-keyword :required-specializable t)
+(define (fcll:lambda-list-keyword :required-specializable) t
   :introducer nil
   :parameter-parser #'%parse-specializable-parameter)
 
-(define (fcll:lambda-list-keyword &optional t)
+(define (fcll:lambda-list-keyword &optional) t
   :parameter-parser #'%parse-optional-parameter)
 
-(define (fcll:lambda-list-keyword &rest 1))
+(define (fcll:lambda-list-keyword &rest) 1)
 
-(define (fcll:lambda-list-keyword &body 1))
+(define (fcll:lambda-list-keyword &body) 1)
 
-(define (fcll:lambda-list-keyword &key t)
+(define (fcll:lambda-list-keyword &key) t
   :parameter-parser #'%parse-key-parameter)
 
-(define (fcll:lambda-list-keyword &allow-other-keys 0))
+(define (fcll:lambda-list-keyword &allow-other-keys) 0)
 
-(define (fcll:lambda-list-keyword &aux t)
+(define (fcll:lambda-list-keyword &aux) t
   :parameter-parser #'%parse-aux-parameter)

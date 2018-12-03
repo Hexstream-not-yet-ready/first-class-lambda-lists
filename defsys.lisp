@@ -14,6 +14,6 @@
         (apply #'make-instance 'fcll:standard-lambda-list-keyword
                :name name :arity arity initargs)))
 
-(defmethod defsys:expand-definition ((system lambda-list-keyword-definitions) name environment args &rest options)
-  (destructuring-bind (arity) options
+(defmethod defsys:expand-definition ((system lambda-list-keyword-definitions) name environment arity-then-args &key)
+  (destructuring-bind (arity &rest args) arity-then-args
     `(%ensure-lambda-list-keyword ',name ,arity ,@args)))
