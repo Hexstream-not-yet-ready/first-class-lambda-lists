@@ -13,7 +13,7 @@
                         :type symbol
                         :initform nil)))
 
-(defclass simple-parameter ()
+(defclass simple-parameter (parameter)
   ((%variable :initarg :variable
               :reader variable
               :type symbol)))
@@ -37,7 +37,7 @@
                    :variable variable
                    :specializer specializer)))
 
-(defclass optional-parameter (parameter-initform-mixin parameter-suppliedp-variable-mixin)
+(defclass optional-parameter (parameter parameter-initform-mixin parameter-suppliedp-variable-mixin)
   ())
 
 (defun %parse-optional-parameter (parameter)
@@ -52,7 +52,7 @@
                    :initform initform
                    :suppliedp-variable suppliedp-variable)))
 
-(defclass aux-parameter (parameter-initform-mixin)
+(defclass aux-parameter (parameter parameter-initform-mixin)
   ())
 
 (defun %parse-aux-parameter (parameter)
@@ -66,7 +66,7 @@
                    :variable variable
                    :initform initform)))
 
-(defclass key-parameter (parameter-initform-mixin parameter-suppliedp-variable-mixin)
+(defclass key-parameter (parameter parameter-initform-mixin parameter-suppliedp-variable-mixin)
   ((%keyword-name :initarg :keyword-name
                   :reader keyword-name
                   :type symbol)))
