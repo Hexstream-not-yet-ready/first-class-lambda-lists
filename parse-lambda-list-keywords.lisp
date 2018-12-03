@@ -75,20 +75,6 @@
                              ((cons symbol null)
                               (car parameter)))))
 
-(defclass aux-parameter (parameter parameter-variable-mixin parameter-initform-mixin)
-  ())
-
-(defun %parse-aux-parameter (parameter)
-  (multiple-value-bind (variable initform)
-      (if (symbolp parameter)
-          (values parameter nil)
-          (destructuring-bind (variable &optional initform)
-              parameter
-            (values variable initform)))
-    (make-instance 'optional-parameter
-                   :variable variable
-                   :initform initform)))
-
 (defclass parameter-keyword-name-mixin ()
   ((%keyword-name :initarg :keyword-name
                   :reader keyword-name
@@ -144,3 +130,17 @@
     (make-instance 'key-no-defaulting-parameter
                    :variable variable
                    :keyword-name keyword-name)))
+
+(defclass aux-parameter (parameter parameter-variable-mixin parameter-initform-mixin)
+  ())
+
+(defun %parse-aux-parameter (parameter)
+  (multiple-value-bind (variable initform)
+      (if (symbolp parameter)
+          (values parameter nil)
+          (destructuring-bind (variable &optional initform)
+              parameter
+            (values variable initform)))
+    (make-instance 'optional-parameter
+                   :variable variable
+                   :initform initform)))
