@@ -65,6 +65,16 @@
                    :initform initform
                    :suppliedp-variable suppliedp-variable)))
 
+(defclass optional-no-defaulting-parameter (parameter)
+  ())
+
+(defun %parse-optional-no-defaulting-parameter (parameter)
+  (make-instance 'optional-no-defaulting-parameter
+                 :variable (etypecase parameter
+                             (symbol parameter)
+                             ((cons symbol null)
+                              (car parameter)))))
+
 (defclass aux-parameter (parameter parameter-variable-mixin parameter-initform-mixin)
   ())
 
@@ -79,18 +89,22 @@
                    :variable variable
                    :initform initform)))
 
-(defclass key-parameter (parameter parameter-variable-mixin parameter-initform-mixin parameter-suppliedp-variable-mixin)
+(defclass parameter-keyword-name-mixin ()
   ((%keyword-name :initarg :keyword-name
                   :reader keyword-name
                   :type symbol)))
 
-(defun %keywordize (symbol)
-  (intern (symbol-name symbol) '#:keyword))
-
-(defmethod shared-initialize :after ((instance key-parameter) slot-names &key)
+(defmethod shared-initialize :after ((instance parameter-keyword-name-mixin) slot-names &key)
   (unless (slot-boundp instance '%keyword-name)
     (setf (slot-value instance '%keyword-name)
           (%keywordize (variable instance)))))
+
+(defclass key-parameter (parameter parameter-variable-mixin parameter-keyword-name-mixin
+                                   parameter-initform-mixin parameter-suppliedp-variable-mixin)
+  ())
+
+(defun %keywordize (symbol)
+  (intern (symbol-name symbol) '#:keyword))
 
 (defun %parse-key-parameter (parameter)
   (multiple-value-bind (variable initform suppliedp-variable keyword-name)
@@ -109,4 +123,24 @@
                    :variable variable
                    :initform initform
                    :suppliedp-variable suppliedp-variable
+                   :keyword-name keyword-name)))
+
+(defclass key-no-defaulting-parameter (parameter parameter-variable-mixin parameter-keyword-name-mixin)
+  ())
+
+(defun %parse-key-no-defaulting-parameter (parameter)
+  (multiple-value-bind (variable keyword-name)
+      (if (symbolp parameter)
+          (values parameter (%keywordize parameter))
+          (destructuring-bind (variable-and/or-keyword-name)
+              parameter
+            (multiple-value-bind (variable keyword-name)
+                (if (symbolp variable-and/or-keyword-name)
+                    (values variable-and/or-keyword-name
+                            (%keywordize variable-and/or-keyword-name))
+                    (destructuring-bind (variable keyword-name) variable-and/or-keyword-name
+                      (values variable keyword-name)))
+              (values variable keyword-name))))
+    (make-instance 'key-no-defaulting-parameter
+                   :variable variable
                    :keyword-name keyword-name)))

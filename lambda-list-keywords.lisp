@@ -36,12 +36,20 @@
 (define (fcll:lambda-list-keyword &optional) t
   :parameter-parser #'%parse-optional-parameter)
 
+(define (fcll:lambda-list-keyword :&optional-no-defaulting) t
+  :introducer '&optional
+  :parameter-parser #'%parse-optional-no-defaulting-parameter)
+
 (define (fcll:lambda-list-keyword &rest) 1)
 
 (define (fcll:lambda-list-keyword &body) 1)
 
 (define (fcll:lambda-list-keyword &key) t
   :parameter-parser #'%parse-key-parameter)
+
+(define (fcll:lambda-list-keyword :&key-no-defaulting) t
+  :introducer '&key
+  :parameter-parser #'%parse-key-no-defaulting-parameter)
 
 (define (fcll:lambda-list-keyword &allow-other-keys) 0)
 

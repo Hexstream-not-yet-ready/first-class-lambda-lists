@@ -20,10 +20,6 @@
   (declare (ignore base add remove replace))
   nil)
 
-(defun %no-defaulting (base)
-  (declare (ignore base))
-  nil)
-
 (make-instance 'fcll:standard-lambda-list-kind
                :name :ordinary
                :operator 'defun
@@ -32,8 +28,8 @@
 (make-instance 'fcll:standard-lambda-list-kind
                :name :generic-function
                :operator 'defgeneric
-               :keywords (%derive-keywords-list :replace `((&optional ,(%no-defaulting '&optional))
-                                                           (&key ,(%no-defaulting '&key)))
+               :keywords (%derive-keywords-list :replace `((&optional :&optional-no-defaulting)
+                                                           (&key :&key-no-defaulting))
                                                 :remove '(&aux)))
 
 (make-instance 'fcll:standard-lambda-list-kind
