@@ -12,6 +12,7 @@
   :version "0.1"
   :serial cl:t
   :components ((:file "package")
+               (:file "parse-lambda-list-keywords")
                (:file "lambda-list-keywords")
                (:file "lambda-list-kinds"))
 
