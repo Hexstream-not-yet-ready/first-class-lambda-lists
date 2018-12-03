@@ -2,6 +2,7 @@
   (:nicknames #:fcll)
   (:use #:cl)
   (:shadow #:variable)
+  (:import-from #:definitions-systems #:define)
   (:export #:lambda-list-keyword
            #:standard-lambda-list-keyword
 

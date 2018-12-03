@@ -7,11 +7,12 @@
 
   :description "To be described."
 
-  :depends-on ()
+  :depends-on ("definitions-systems")
 
   :version "0.1"
   :serial cl:t
   :components ((:file "package")
+               (:file "defsys")
                (:file "parse-lambda-list-keywords")
                (:file "lambda-list-keywords")
                (:file "lambda-list-kinds"))

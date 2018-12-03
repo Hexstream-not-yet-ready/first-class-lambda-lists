@@ -2,10 +2,8 @@
 
 (defclass fcll:lambda-list-keyword () ())
 
-(defclass fcll:standard-lambda-list-keyword ()
-  ((%name :initarg :name
-          :reader name)
-   (%arity :initarg :arity
+(defclass fcll:standard-lambda-list-keyword (fcll:lambda-list-keyword defsys:name-mixin)
+  ((%arity :initarg :arity
            :reader arity)
    (%introducer :initarg :introducer)
    (%parameter-parser :initarg :parameter-parser
@@ -14,7 +12,7 @@
 
 (defmethod shared-initialize :after ((instance fcll:standard-lambda-list-keyword) slot-names &key)
   (unless (slot-boundp instance '%introducer)
-    (setf (slot-value instance '%introducer) (name instance)))
+    (setf (slot-value instance '%introducer) (defsys:name instance)))
   (unless (slot-boundp instance '%parameter-parser)
     (setf (slot-value instance '%parameter-parser)
           (let ((arity (arity instance)))
@@ -23,49 +21,29 @@
               (1 #'%parse-simple-parameter)
               (t (error "Must supply a parameter-parser for arity ~S." arity)))))))
 
-(make-instance 'fcll:standard-lambda-list-keyword
-               :name '&whole
-               :arity 1)
+(define (fcll:lambda-list-keyword &whole 1))
 
-(make-instance 'fcll:standard-lambda-list-keyword
-               :name '&environment
-               :arity 1)
+(define (fcll:lambda-list-keyword &environment 1))
 
-(make-instance 'fcll:standard-lambda-list-keyword
-               :name :required
-               :arity t
-               :introducer nil
-               :parameter-parser #'%parse-simple-parameter)
+(define (fcll:lambda-list-keyword :required t)
+  :introducer nil
+  :parameter-parser #'%parse-simple-parameter)
 
-(make-instance 'fcll:standard-lambda-list-keyword
-               :name :required-specializable
-               :arity t
-               :introducer nil
-               :parameter-parser #'%parse-specializable-parameter)
+(define (fcll:lambda-list-keyword :required-specializable t)
+  :introducer nil
+  :parameter-parser #'%parse-specializable-parameter)
 
-(make-instance 'fcll:standard-lambda-list-keyword
-               :name '&optional
-               :arity t
-               :parameter-parser #'%parse-optional-parameter)
+(define (fcll:lambda-list-keyword &optional t)
+  :parameter-parser #'%parse-optional-parameter)
 
-(make-instance 'fcll:standard-lambda-list-keyword
-               :name '&rest
-               :arity 1)
+(define (fcll:lambda-list-keyword &rest 1))
 
-(make-instance 'fcll:standard-lambda-list-keyword
-               :name '&body
-               :arity 1)
+(define (fcll:lambda-list-keyword &body 1))
 
-(make-instance 'fcll:standard-lambda-list-keyword
-               :name '&key
-               :arity t
-               :parameter-parser #'%parse-key-parameter)
+(define (fcll:lambda-list-keyword &key t)
+  :parameter-parser #'%parse-key-parameter)
 
-(make-instance 'fcll:standard-lambda-list-keyword
-               :name '&allow-other-keys
-               :arity 0)
+(define (fcll:lambda-list-keyword &allow-other-keys 0))
 
-(make-instance 'fcll:standard-lambda-list-keyword
-               :name '&aux
-               :arity t
-               :parameter-parser #'%parse-aux-parameter)
+(define (fcll:lambda-list-keyword &aux t)
+  :parameter-parser #'%parse-aux-parameter)
