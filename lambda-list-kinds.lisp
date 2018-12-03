@@ -28,7 +28,7 @@
 (make-instance 'fcll:standard-lambda-list-kind
                :name :generic-function
                :operator 'defgeneric
-               :keywords (%derive-keywords-list :replace `((&optional :&optional-no-defaulting)
+               :keywords (%derive-keywords-list :replace '((&optional :&optional-no-defaulting)
                                                            (&key :&key-no-defaulting))
                                                 :remove '(&aux)))
 
