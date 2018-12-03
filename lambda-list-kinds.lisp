@@ -26,7 +26,7 @@
 
 (make-instance 'fcll:standard-lambda-list-kind
                :name :ordinary
-               :operator 'lambda
+               :operator 'defun
                :keywords '(:required &optional &rest &key &aux)) ;&allow-other-keys is subordinate to &key, so implied by it.
 
 (make-instance 'fcll:standard-lambda-list-kind
