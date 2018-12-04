@@ -17,3 +17,23 @@
 (defmethod defsys:expand-definition ((system lambda-list-keyword-definitions) name environment arity-then-args &key)
   (destructuring-bind (arity &rest args) arity-then-args
     `(%ensure-lambda-list-keyword ',name ,arity ,@args)))
+
+
+(defclass lambda-list-kind-definitions (defsys:standard-system)
+  ())
+
+(defvar *lambda-list-kind-definitions*
+  (make-instance 'lambda-list-kind-definitions :name 'fcll:lambda-list-kind))
+
+(setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-kind)
+      *lambda-list-kind-definitions*)
+
+(defun %ensure-lambda-list-kind (name operator keywords &rest initargs)
+  (setf (defsys:locate *lambda-list-kind-definitions* name)
+        (apply #'make-instance 'fcll:standard-lambda-list-kind
+               :name name :operator operator :keywords keywords
+               initargs)))
+
+(defmethod defsys:expand-definition ((system lambda-list-kind-definitions) name environment args &key)
+  (destructuring-bind (operator keywords &rest args) args
+    `(%ensure-lambda-list-kind ',name ',operator ,keywords ,@args)))

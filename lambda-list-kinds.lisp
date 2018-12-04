@@ -20,58 +20,38 @@
   (declare (ignore base add remove replace))
   nil)
 
-(make-instance 'fcll:standard-lambda-list-kind
-               :name :ordinary
-               :operator 'defun
-               :keywords '(:required &optional &rest &key &aux)) ;&allow-other-keys is subordinate to &key, so implied by it.
+(define (fcll:lambda-list-kind :ordinary) defun
+  '(:required &optional &rest &key &aux)) ;&allow-other-keys is subordinate to &key, so implied by it.
 
-(make-instance 'fcll:standard-lambda-list-kind
-               :name :generic-function
-               :operator 'defgeneric
-               :keywords (%derive-keywords-list :replace '((&optional :&optional-no-defaulting)
-                                                           (&key :&key-no-defaulting))
-                                                :remove '(&aux)))
+(define (fcll:lambda-list-kind :generic-function) defgeneric
+  (%derive-keywords-list :replace '((&optional :&optional-no-defaulting)
+                                    (&key :&key-no-defaulting))
+                         :remove '(&aux)))
 
-(make-instance 'fcll:standard-lambda-list-kind
-               :name :specialized
-               :operator 'defmethod
-               :keywords (%derive-keywords-list :replace '((:required :required-specializable))))
+(define (fcll:lambda-list-kind :specialized) defmethod
+  (%derive-keywords-list :replace '((:required :required-specializable))))
 
-(make-instance 'fcll:standard-lambda-list-kind
-               :name :destructuring
-               :operator 'destructuring-bind
-               :keywords (%derive-keywords-list :add '(&whole &body))
-               :recurse :self)
+(define (fcll:lambda-list-kind :destructuring) destructuring-bind
+  (%derive-keywords-list :add '(&whole &body))
+  :recurse :self)
 
-(make-instance 'fcll:standard-lambda-list-kind
-               :name :macro
-               :operator 'defmacro
-               :keywords (%derive-keywords-list :base :destructuring :add '(&environment))
-               :recurse :destructuring)
+(define (fcll:lambda-list-kind :macro) defmacro
+  (%derive-keywords-list :base :destructuring :add '(&environment))
+  :recurse :destructuring)
 
-(make-instance 'fcll:standard-lambda-list-kind
-               :name :boa
-               :operator 'defstruct
-               :keywords (%derive-keywords-list))
+(define (fcll:lambda-list-kind :boa) defstruct
+  (%derive-keywords-list))
 
-(make-instance 'fcll:standard-lambda-list-kind
-               :name :defsetf
-               :operator 'defsetf
-               :keywords (%derive-keywords-list :add '(&environment) :remove '(&aux)))
+(define (fcll:lambda-list-kind :defsetf) defsetf
+  (%derive-keywords-list :add '(&environment) :remove '(&aux)))
 
-(make-instance 'fcll:standard-lambda-list-kind
-               :name :deftype
-               :operator 'deftype
-               :keywords (%derive-keywords-list :base :macro)
-               :recurse :destructuring
-               :default '*)
+(define (fcll:lambda-list-kind :deftype) deftype
+  (%derive-keywords-list :base :macro)
+  :recurse :destructuring
+  :default '*)
 
-(make-instance 'fcll:standard-lambda-list-kind
-               :name :define-modify-macro
-               :operator 'define-modify-macro
-               :keywords (%derive-keywords-list :remove '(&key &aux)))
+(define (fcll:lambda-list-kind :define-modify-macro) define-modify-macro
+  (%derive-keywords-list :remove '(&key &aux)))
 
-(make-instance 'fcll:standard-lambda-list-kind
-               :name :define-method-combination-arguments
-               :operator 'define-method-combination
-               :keywords (%derive-keywords-list :add '(&whole)))
+(define (fcll:lambda-list-kind :define-method-combination-arguments) define-method-combination
+  (%derive-keywords-list :add '(&whole)))
