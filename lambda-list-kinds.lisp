@@ -16,8 +16,8 @@
              :reader default
              :initform nil)))
 
-(defun %derive-keywords-list (&key (base :ordinary) add remove replace)
-  (declare (ignore base add remove replace))
+(defun %derive-keywords-list (&key (from :ordinary) add remove replace)
+  (declare (ignore from add remove replace))
   nil)
 
 (define (fcll:lambda-list-kind :ordinary) defun
@@ -36,7 +36,7 @@
   :recurse :self)
 
 (define (fcll:lambda-list-kind :macro) defmacro
-  (%derive-keywords-list :base :destructuring :add '(&environment))
+  (%derive-keywords-list :from :destructuring :add '(&environment))
   :recurse :destructuring)
 
 (define (fcll:lambda-list-kind :boa) defstruct
@@ -46,7 +46,7 @@
   (%derive-keywords-list :add '(&environment) :remove '(&aux)))
 
 (define (fcll:lambda-list-kind :deftype) deftype
-  (%derive-keywords-list :base :macro)
+  (%derive-keywords-list :from :macro)
   :recurse :destructuring
   :default '*)
 
