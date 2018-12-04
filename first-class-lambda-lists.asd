@@ -13,7 +13,7 @@
   :serial cl:t
   :components ((:file "package")
                (:file "defsys")
-               (:file "parse-lambda-list-keywords")
+               (:file "lambda-list-parameters")
                (:file "lambda-list-keywords")
                (:file "lambda-list-kinds"))
 
