@@ -21,6 +21,10 @@
               (1 #'%parse-simple-parameter)
               (t (error "Must supply a parameter-parser for arity ~S." arity)))))))
 
+(defmethod defsys:locate ((system lambda-list-keyword-definitions) (name fcll:lambda-list-keyword) &rest keys)
+  (declare (ignore keys))
+  name)
+
 (define (fcll:lambda-list-keyword &whole) 1)
 
 (define (fcll:lambda-list-keyword &environment) 1)

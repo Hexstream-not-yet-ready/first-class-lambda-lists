@@ -2,13 +2,12 @@
 
 (defclass fcll:lambda-list-kind () ())
 
-(defclass fcll:standard-lambda-list-kind (fcll:lambda-list-kind)
-  ((%name :initarg :name
-          :reader name)
-   (%operator :initarg :operator
+(defclass fcll:standard-lambda-list-kind (fcll:lambda-list-kind defsys:name-mixin)
+  ((%operator :initarg :operator
               :reader operator)
    (%keywords :initarg :keywords
-              :reader keywords)
+              :reader keywords
+              :type list)
    (%recurse :initarg :recurse
              :reader recurse
              :initform nil)
@@ -16,9 +15,46 @@
              :reader default
              :initform nil)))
 
+(defun %make-keyword-canonicalizer ()
+  (let ((defs *lambda-list-keyword-definitions*))
+    (lambda (designator)
+      (defsys:locate defs designator))))
+
+(defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key)
+  (setf (slot-value kind '%keywords)
+        (mapcar (%make-keyword-canonicalizer) (slot-value kind '%keywords))))
+
+(defun %keyword= (a b)
+  (and (typep a 'fcll:lambda-list-keyword)
+       (typep b 'fcll:lambda-list-keyword)
+       (eq (defsys:name a) (defsys:name b))))
+
 (defun %derive-keywords-list (&key (from :ordinary) add remove replace)
-  (declare (ignore from add remove replace))
-  nil)
+  (let ((canonicalize (%make-keyword-canonicalizer)))
+    (flet ((listify (object)
+             (if (listp object)
+                 object
+                 (list object))))
+      (multiple-value-bind (replace-add replace-remove)
+          (let ((add nil)
+                (remove nil))
+            (dolist (cons replace)
+              (push add (first cons))
+              (push remove (second cons)))
+            (values (nreverse add) (nreverse remove)))
+        (let ((inherited (keywords (defsys:locate *lambda-list-kind-definitions* from)))
+              (add (nconc (mapcar canonicalize (listify add)) replace-add))
+              (remove (nconc (mapcar canonicalize (listify remove)) replace-remove)))
+          (let ((shared (intersection add remove :test #'%keyword=)))
+            (when shared
+              (error "Cannot both add and remove the same kinds: ~S" shared)))
+          (let ((overadd (intersection inherited add :test #'%keyword=)))
+            (when overadd
+              (warn "Tried to add already inherited lambda list keywords: ~S" overadd)))
+          (let ((overremove (set-difference remove inherited :test #'%keyword=)))
+            (when overremove
+              (warn "Tried to remove already not inherited lambda list keywords: ~S" overremove)))
+          (union (set-difference inherited remove :test #'%keyword=) add :test #'%keyword=))))))
 
 (define (fcll:lambda-list-kind :ordinary) defun
   (:required &optional &rest &key &aux)) ;&allow-other-keys is subordinate to &key, so implied by it.
