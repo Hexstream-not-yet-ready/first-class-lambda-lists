@@ -15,19 +15,9 @@
              :reader default
              :initform nil)))
 
-(defun %make-keyword-canonicalizer ()
-  (let ((defs *lambda-list-keyword-definitions*))
-    (lambda (designator)
-      (defsys:locate defs designator))))
-
 (defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key)
   (setf (slot-value kind '%keywords)
         (mapcar (%make-keyword-canonicalizer) (slot-value kind '%keywords))))
-
-(defun %keyword= (a b)
-  (and (typep a 'fcll:lambda-list-keyword)
-       (typep b 'fcll:lambda-list-keyword)
-       (eq (defsys:name a) (defsys:name b))))
 
 (defun %derive-keywords-list (&key (from :ordinary) add remove replace)
   (let ((canonicalize (%make-keyword-canonicalizer)))

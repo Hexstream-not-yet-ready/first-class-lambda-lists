@@ -25,6 +25,16 @@
   (declare (ignore keys))
   name)
 
+(defun %make-keyword-canonicalizer ()
+  (let ((defs *lambda-list-keyword-definitions*))
+    (lambda (designator)
+      (defsys:locate defs designator))))
+
+(defun %keyword= (a b)
+  (and (typep a 'fcll:lambda-list-keyword)
+       (typep b 'fcll:lambda-list-keyword)
+       (eq (defsys:name a) (defsys:name b))))
+
 (define (fcll:lambda-list-keyword &whole) 1)
 
 (define (fcll:lambda-list-keyword &environment) 1)
