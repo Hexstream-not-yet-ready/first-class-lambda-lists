@@ -36,4 +36,15 @@
 
 (defmethod defsys:expand-definition ((system lambda-list-kind-definitions) name environment args &key)
   (destructuring-bind (operator keywords &rest args) args
-    `(%ensure-lambda-list-kind ',name ',operator ,keywords ,@args)))
+    (let ((keywords-expansion
+           (etypecase keywords
+             ((cons (eql :derive) list)
+              `(%derive-keywords-list ,@(mapcan (let ((processp t))
+                                                  (lambda (key value)
+                                                    (prog1 (when processp
+                                                             (list key `',value))
+                                                      (setf processp (not processp)))))
+                                                (cdr keywords)
+                                                (cddr keywords))))
+             (list `',keywords))))
+      `(%ensure-lambda-list-kind ',name ',operator ,keywords-expansion ,@args))))

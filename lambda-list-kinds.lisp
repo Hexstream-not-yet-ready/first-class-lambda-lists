@@ -21,37 +21,37 @@
   nil)
 
 (define (fcll:lambda-list-kind :ordinary) defun
-  '(:required &optional &rest &key &aux)) ;&allow-other-keys is subordinate to &key, so implied by it.
+  (:required &optional &rest &key &aux)) ;&allow-other-keys is subordinate to &key, so implied by it.
 
 (define (fcll:lambda-list-kind :generic-function) defgeneric
-  (%derive-keywords-list :replace '((&optional :&optional-no-defaulting)
-                                    (&key :&key-no-defaulting))
-                         :remove '(&aux)))
+  (:derive :replace ((&optional :&optional-no-defaulting)
+                     (&key :&key-no-defaulting))
+           :remove &aux))
 
 (define (fcll:lambda-list-kind :specialized) defmethod
-  (%derive-keywords-list :replace '((:required :required-specializable))))
+  (:derive :replace ((:required :required-specializable))))
 
 (define (fcll:lambda-list-kind :destructuring) destructuring-bind
-  (%derive-keywords-list :add '(&whole &body))
+  (:derive :add (&whole &body))
   :recurse :self)
 
 (define (fcll:lambda-list-kind :macro) defmacro
-  (%derive-keywords-list :from :destructuring :add '(&environment))
+  (:derive :from :destructuring :add &environment)
   :recurse :destructuring)
 
 (define (fcll:lambda-list-kind :boa) defstruct
-  (%derive-keywords-list))
+  (:derive))
 
 (define (fcll:lambda-list-kind :defsetf) defsetf
-  (%derive-keywords-list :add '(&environment) :remove '(&aux)))
+  (:derive :add &environment :remove &aux))
 
 (define (fcll:lambda-list-kind :deftype) deftype
-  (%derive-keywords-list :from :macro)
+  (:derive :from :macro)
   :recurse :destructuring
   :default '*)
 
 (define (fcll:lambda-list-kind :define-modify-macro) define-modify-macro
-  (%derive-keywords-list :remove '(&key &aux)))
+  (:derive :remove (&key &aux)))
 
 (define (fcll:lambda-list-kind :define-method-combination-arguments) define-method-combination
-  (%derive-keywords-list :add '(&whole)))
+  (:derive :add &whole))
