@@ -62,14 +62,14 @@
   :recurse :self)
 
 (define (fcll:lambda-list-kind :macro) defmacro
-  (:derive :from :destructuring :add &environment)
+  (:derive :from :destructuring :add :&environment-not-before-&whole)
   :recurse :destructuring)
 
 (define (fcll:lambda-list-kind :boa) defstruct
   (:derive))
 
 (define (fcll:lambda-list-kind :defsetf) defsetf
-  (:derive :add &environment :remove &aux))
+  (:derive :add :&environment-last :remove &aux))
 
 (define (fcll:lambda-list-kind :deftype) deftype
   (:derive :from :macro)

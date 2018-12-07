@@ -7,7 +7,8 @@
 
   :description "To be described."
 
-  :depends-on ("definitions-systems")
+  :depends-on ("definitions-systems"
+               "bubble-operator-upwards")
 
   :version "0.1"
   :serial cl:t
@@ -15,6 +16,7 @@
                (:file "defsys")
                (:file "lambda-list-parameters")
                (:file "lambda-list-keywords")
-               (:file "lambda-list-kinds"))
+               (:file "lambda-list-kinds")
+               (:file "lambda-lists"))
 
   :in-order-to ((asdf:test-op (asdf:test-op #:first-class-lambda-lists_tests))))
