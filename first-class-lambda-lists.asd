@@ -16,6 +16,7 @@
                (:file "defsys")
                (:file "lambda-list-parameters")
                (:file "lambda-list-keywords")
+               (:file "lambda-list-keyword-order")
                (:file "lambda-list-kinds")
                (:file "lambda-lists"))
 

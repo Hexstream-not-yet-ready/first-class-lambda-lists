@@ -7,6 +7,9 @@
   (:export #:lambda-list-keyword
            #:standard-lambda-list-keyword
 
+           #:lambda-list-keyword-order
+           #:standard-lambda-list-keyword-order
+
            #:lambda-list-kind
            #:standard-lambda-list-kind
 

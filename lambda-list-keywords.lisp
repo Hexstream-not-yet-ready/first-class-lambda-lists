@@ -38,7 +38,7 @@
 (define (fcll:lambda-list-keyword &whole) 1)
 
 (define (fcll:lambda-list-keyword :&environment-not-before-&whole) 1
-  :introdcer '&environment)
+  :introducer '&environment)
 
 (define (fcll:lambda-list-keyword :&environment-last) 1
   :introducer '&environment)
@@ -73,30 +73,3 @@
 
 (define (fcll:lambda-list-keyword &aux) t
   :parameter-parser #'%parse-aux-parameter)
-
-(defun %expand-order (multiplexed)
-  (mapcan (lambda (before after)
-            (flet ((extract-possibilities (possibilities)
-                     (etypecase possibilities
-                       (symbol (list possibilities))
-                       ((cons (eql or) (cons symbol list))
-                        (mapcar (lambda (possibility)
-                                  (check-type possibility symbol))
-                                (cddr possibilities))
-                        (cdr possibilities)))))
-              (cartesian-product (extract-possibilities before)
-                                 (extract-possibilities after))))
-          multiplexed
-          (cdr multiplexed)))
-
-#+nil
-(define-order (&whole
-               (or :required :required-specializable)
-               (or &optional :&optional-no-defaulting)
-               (or &rest &body)
-               (or &key :&key-no-defaulting)
-               &aux
-               :&environment-last))
-
-#+nil
-(define-order (&whole :&environment-not-before-&whole))

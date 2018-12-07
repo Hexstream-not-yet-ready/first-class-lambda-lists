@@ -19,6 +19,24 @@
     `(%ensure-lambda-list-keyword ',name ,arity ,@args)))
 
 
+(defclass lambda-list-keyword-order-definitions (defsys:standard-system)
+  ())
+
+(defvar *lambda-list-keyword-order-definitions*
+  (make-instance 'lambda-list-keyword-order-definitions :name 'fcll:lambda-list-keyword-order))
+
+(setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-keyword-order)
+      *lambda-list-keyword-order-definitions*)
+
+(defun %ensure-lambda-list-keyword-order (name order-chains)
+  (setf (defsys:locate *lambda-list-keyword-order-definitions* name)
+        (make-instance 'fcll:standard-lambda-list-keyword-order
+                       :name name :order-chains order-chains)))
+
+(defmethod defsys:expand-definition ((system lambda-list-keyword-order-definitions) name environment args &key)
+  `(%ensure-lambda-list-keyword-order ',name ',args))
+
+
 (defclass lambda-list-kind-definitions (defsys:standard-system)
   ())
 
