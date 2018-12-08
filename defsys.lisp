@@ -34,7 +34,8 @@
                        :name name :specification specification)))
 
 (defmethod defsys:expand-definition ((system lambda-list-keyword-order-definitions) name environment args &key)
-  `(%ensure-lambda-list-keyword-order ',name ',args))
+  (destructuring-bind (specification) args
+    `(%ensure-lambda-list-keyword-order ',name ',specification)))
 
 
 (defclass lambda-list-kind-definitions (defsys:standard-system)
