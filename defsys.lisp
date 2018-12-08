@@ -28,10 +28,10 @@
 (setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-keyword-order)
       *lambda-list-keyword-order-definitions*)
 
-(defun %ensure-lambda-list-keyword-order (name order-chains)
+(defun %ensure-lambda-list-keyword-order (name specification)
   (setf (defsys:locate *lambda-list-keyword-order-definitions* name)
         (make-instance 'fcll:standard-lambda-list-keyword-order
-                       :name name :order-chains order-chains)))
+                       :name name :specification specification)))
 
 (defmethod defsys:expand-definition ((system lambda-list-keyword-order-definitions) name environment args &key)
   `(%ensure-lambda-list-keyword-order ',name ',args))
