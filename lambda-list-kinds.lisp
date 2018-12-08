@@ -8,6 +8,7 @@
    (%keywords :initarg :keywords
               :reader keywords
               :type list)
+   (%keyword-order :reader keyword-order)
    (%recurse :initarg :recurse
              :reader recurse
              :initform nil)
@@ -15,9 +16,28 @@
              :reader default
              :initform nil)))
 
+(defun %compute-keyword-order (keywords keyword-order)
+  (labels ((recurse (spec)
+             (etypecase spec
+               (cons (destructuring-bind (operator &rest args) spec
+                       (check-type operator (member list or))
+                       (let ((args (mapcan #'recurse args)))
+                         (case (length args)
+                           (0 nil)
+                           (1 args)
+                           (t (list (cons operator args)))))))
+               (symbol (when (member spec keywords :key #'defsys:name :test #'eq)
+                         (list spec))))))
+    (first (recurse keyword-order))))
+
 (defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key)
-  (setf (slot-value kind '%keywords)
-        (mapcar (%make-keyword-canonicalizer) (slot-value kind '%keywords))))
+  (let ((keywords (mapcar (%make-keyword-canonicalizer) (slot-value kind '%keywords))))
+    (setf (slot-value kind '%keywords)
+          keywords
+          (slot-value kind '%keyword-order)
+          (%compute-keyword-order
+           keywords
+           (specification (defsys:locate 'fcll:lambda-list-keyword-order :standard))))))
 
 (defun %derive-keywords-list (&key (from :ordinary) add remove replace)
   (let ((canonicalize (%make-keyword-canonicalizer)))
