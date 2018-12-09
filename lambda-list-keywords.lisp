@@ -31,9 +31,9 @@
       (defsys:locate defs designator))))
 
 (defun %keyword= (a b)
-  (and (typep a 'fcll:lambda-list-keyword)
-       (typep b 'fcll:lambda-list-keyword)
-       (eq (defsys:name a) (defsys:name b))))
+  (check-type a fcll:lambda-list-keyword)
+  (check-type b fcll:lambda-list-keyword)
+  (eq (defsys:name a) (defsys:name b)))
 
 (define (fcll:lambda-list-keyword &whole) 1)
 
