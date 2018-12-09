@@ -64,7 +64,7 @@
               (remove (nconc (mapcar canonicalize (listify remove)) replace-remove)))
           (let ((shared (intersection add remove :test #'%keyword=)))
             (when shared
-              (error "Cannot both add and remove the same kinds: ~S" shared)))
+              (error "Cannot both add and remove the same lambda list keywords: ~S" shared)))
           (let ((overadd (intersection inherited add :test #'%keyword=)))
             (when overadd
               (warn "Tried to add already inherited lambda list keywords: ~S" overadd)))
