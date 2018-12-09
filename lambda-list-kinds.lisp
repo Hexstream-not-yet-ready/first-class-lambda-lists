@@ -21,7 +21,14 @@
              (etypecase spec
                (cons (destructuring-bind (operator &rest args) spec
                        (check-type operator (member list or))
-                       (let ((args (mapcan #'recurse args)))
+                       (let ((args (mapcan (let ((to-splice `(cons (cons (eql ,operator) list)
+                                                                   null)))
+                                             (lambda (arg)
+                                               (let ((result (recurse arg)))
+                                                 (if (typep result to-splice)
+                                                     (rest (first result))
+                                                     result))))
+                                           args)))
                          (case (length args)
                            (0 nil)
                            (1 args)
