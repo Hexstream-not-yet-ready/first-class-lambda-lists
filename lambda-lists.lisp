@@ -8,4 +8,16 @@
           :type fcll:lambda-list-kind
           :initform (error "Must supply a lambda list kind."))
    (%sections :reader %sections
-              :type simple-vector)))
+              :type list
+              :initform nil)))
+
+(defgeneric reset (object))
+
+(defmethod reset ((lambda-list fcll:standard-lambda-list))
+  (setf (slot-value lambda-list '%sections) nil))
+
+
+(defgeneric parse-lambda-list (lambda-list specification))
+
+(defmethod parse-lambda-list ((lambda-list fcll:standard-lambda-list) specification)
+  )

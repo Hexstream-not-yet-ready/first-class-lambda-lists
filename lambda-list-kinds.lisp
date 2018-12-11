@@ -17,25 +17,11 @@
              :initform nil)))
 
 (defun %compute-keyword-order (keywords keyword-order)
-  (labels ((recurse (spec)
-             (etypecase spec
-               (cons (destructuring-bind (operator &rest args) spec
-                       (check-type operator (member list or))
-                       (let ((args (mapcan (let ((to-splice `(cons (cons (eql ,operator) list)
-                                                                   null)))
-                                             (lambda (arg)
-                                               (let ((result (recurse arg)))
-                                                 (if (typep result to-splice)
-                                                     (rest (first result))
-                                                     result))))
-                                           args)))
-                         (case (length args)
-                           (0 nil)
-                           (1 args)
-                           (t (list (cons operator args)))))))
-               (symbol (when (member spec keywords :key #'defsys:name :test #'eq)
-                         (list spec))))))
-    (first (recurse keyword-order))))
+  (%transform-keyword-order keyword-order
+                            (lambda (keyword)
+                              (when (member (defsys:name keyword) keywords
+                                            :key #'defsys:name :test #'eq)
+                                (list keyword)))))
 
 (defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key)
   (let ((keywords (mapcar (%make-keyword-canonicalizer) (slot-value kind '%keywords))))
@@ -44,7 +30,7 @@
           (slot-value kind '%keyword-order)
           (%compute-keyword-order
            keywords
-           (specification (defsys:locate 'fcll:lambda-list-keyword-order :standard))))))
+           (tree (defsys:locate 'fcll:lambda-list-keyword-order :standard))))))
 
 (defun %derive-keywords-list (&key (from :ordinary) add remove replace)
   (let ((canonicalize (%make-keyword-canonicalizer)))
