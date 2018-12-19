@@ -20,4 +20,5 @@
 (defgeneric parse-lambda-list (lambda-list specification))
 
 (defmethod parse-lambda-list ((lambda-list fcll:standard-lambda-list) specification)
-  )
+  (setf (slot-value lambda-list '%sections)
+        (funcall (parser-maker (kind lambda-list)) specification)))

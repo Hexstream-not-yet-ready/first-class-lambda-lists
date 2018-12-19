@@ -14,7 +14,8 @@
              :initform nil)
    (%default :initarg :default
              :reader default
-             :initform nil)))
+             :initform nil)
+   (%parser-maker :reader parser-maker)))
 
 (defun %compute-keyword-order (keywords keyword-order)
   (%transform-keyword-order keyword-order
@@ -23,14 +24,48 @@
                                             :key #'defsys:name :test #'eq)
                                 (list keyword)))))
 
+(defun %make-parser-maker (keyword-order)
+  (labels ((recurse (spec)
+             (etypecase spec
+               (cons (destructuring-bind (operator &rest args) spec
+                       (check-type args cons)
+                       (let ((arg-processors (mapcar #'recurse args)))
+                         (ecase operator
+                           (list (lambda (tail)
+                                   (if tail
+                                       (let ((all-sections nil))
+                                         (block nil
+                                           (mapl (lambda (processors)
+                                                   (multiple-value-bind (new-tail sections)
+                                                       (funcall (first processors) tail)
+                                                     (push sections all-sections)
+                                                     (unless new-tail
+                                                       (return))
+                                                     (unless (eq new-tail tail)
+                                                       (setf arg-processors (rest processors)
+                                                             tail new-tail))))
+                                                 arg-processors))
+                                         (values tail (apply #'nconc (nreverse all-sections))))
+                                       (values tail nil))))
+                           (or (lambda (tail)
+                                 (if tail
+                                     '?
+                                     (values tail nil))))))))
+               (fcll:lambda-list-keyword (parser spec)))))
+    (recurse keyword-order)))
+
 (defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key)
-  (let ((keywords (mapcar (%make-keyword-canonicalizer) (slot-value kind '%keywords))))
+  (print (defsys:name kind))
+  (let* ((keywords (mapcar (%make-keyword-canonicalizer) (slot-value kind '%keywords)))
+         (keyword-order (%compute-keyword-order
+                         keywords
+                         (tree (defsys:locate 'fcll:lambda-list-keyword-order :standard)))))
     (setf (slot-value kind '%keywords)
           keywords
           (slot-value kind '%keyword-order)
-          (%compute-keyword-order
-           keywords
-           (tree (defsys:locate 'fcll:lambda-list-keyword-order :standard))))))
+          (print keyword-order)
+          (slot-value kind '%parser-maker)
+          (%make-parser-maker keyword-order))))
 
 (defun %derive-keywords-list (&key (from :ordinary) add remove replace)
   (let ((canonicalize (%make-keyword-canonicalizer)))

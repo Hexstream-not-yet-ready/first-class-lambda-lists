@@ -6,6 +6,8 @@
   (:import-from #:bubble-operator-upwards #:cartesian-product)
   (:export #:lambda-list-keyword
            #:standard-lambda-list-keyword
+           #:lambda-list-section
+           #:standard-lambda-list-section
 
            #:lambda-list-keyword-order
            #:standard-lambda-list-keyword-order
