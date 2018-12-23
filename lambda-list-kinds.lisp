@@ -113,7 +113,9 @@
         (multiple-value-bind (new-tail sections donep)
             (funcall (funcall parser-maker) tail)
           (if new-tail
-              (error "Could not completely parse lambda list:~%~S~%new-tail: ~S~%donep: ~S~%sections: ~S" tail new-tail donep sections)
+              (error "Could not completely parse lambda list:~@
+                      ~S~%new-tail: ~S~%donep: ~S~%sections: ~S"
+                     tail new-tail donep sections)
               sections))))))
 
 (defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key)
