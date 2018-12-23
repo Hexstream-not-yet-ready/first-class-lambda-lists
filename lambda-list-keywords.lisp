@@ -65,7 +65,9 @@
       ((t) (lambda (tail)
              (let* ((end (member-if #'%apparent-lambda-list-keyword-p tail))
                     (head (ldiff tail end)))
-               (values end (map-into head parameter-parser head))))))))
+               (values end (make-instance 'fcll:standard-lambda-list-section
+                                          :lambda-list-keyword lambda-list-keyword
+                                          :parameters (map-into head parameter-parser head)))))))))
 
 (defun %make-lambda-list-keyword-parser (lambda-list-keyword)
   (%make-introducer-parser (introducer lambda-list-keyword)
