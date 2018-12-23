@@ -19,9 +19,7 @@
                         :initform nil)))
 
 (defclass simple-parameter (parameter parameter-variable-mixin)
-  ((%variable :initarg :variable
-              :reader variable
-              :type symbol)))
+  ())
 
 (defun %parse-simple-parameter (parameter)
   (check-type parameter symbol)
