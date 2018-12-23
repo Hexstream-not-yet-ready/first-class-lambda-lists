@@ -2,6 +2,12 @@
 
 (defclass parameter () ())
 
+(defgeneric unparse (object))
+
+(defmethod print-object ((parameter parameter) stream)
+  (print-unreadable-object (parameter stream :type t)
+    (prin1 (unparse parameter) stream)))
+
 (defclass parameter-variable-mixin ()
   ((%variable :initarg :variable
               :reader variable
@@ -25,6 +31,9 @@
   (check-type parameter symbol)
   (make-instance 'simple-parameter :variable parameter))
 
+(defmethod unparse ((parameter simple-parameter))
+  (variable parameter))
+
 (defclass required-parameter (parameter parameter-variable-mixin)
   ())
 
@@ -32,21 +41,31 @@
   (check-type parameter symbol)
   (make-instance 'required-parameter :variable parameter))
 
+(defmethod unparse ((parameter required-parameter))
+  (variable parameter))
+
 (defclass specializable-parameter (required-parameter)
   ((%specializer :initarg :specializer
                  :reader specializer
-                 :initform nil)))
+                 :initform t)))
 
 (defun %parse-specializable-parameter (parameter)
   (multiple-value-bind (variable specializer)
       (if (symbolp parameter)
-          (values parameter nil)
-          (destructuring-bind (variable &optional specializer)
+          (values parameter t)
+          (destructuring-bind (variable &optional (specializer t))
               parameter
             (values variable specializer)))
     (make-instance 'specializable-parameter
                    :variable variable
                    :specializer specializer)))
+
+(defmethod unparse ((parameter specializable-parameter))
+  (let ((variable (variable parameter))
+        (specializer (specializer parameter)))
+    (if (eq specializer t)
+        variable
+        (list variable specializer))))
 
 (defclass optional-parameter (parameter parameter-variable-mixin parameter-initform-mixin parameter-suppliedp-variable-mixin)
   ())
@@ -63,7 +82,15 @@
                    :initform initform
                    :suppliedp-variable suppliedp-variable)))
 
-(defclass optional-no-defaulting-parameter (parameter)
+(defmethod unparse ((parameter optional-parameter))
+  (let ((variable (variable parameter))
+        (initform (initform parameter))
+        (suppliedp-variable (suppliedp-variable parameter)))
+    (if (or initform suppliedp-variable)
+        `(,variable ,initform ,@(when suppliedp-variable (list suppliedp-variable)))
+        variable)))
+
+(defclass optional-no-defaulting-parameter (parameter parameter-variable-mixin)
   ())
 
 (defun %parse-optional-no-defaulting-parameter (parameter)
@@ -72,6 +99,9 @@
                              (symbol parameter)
                              ((cons symbol null)
                               (car parameter)))))
+
+(defmethod unparse ((parameter optional-no-defaulting-parameter))
+  (variable parameter))
 
 (defclass parameter-keyword-name-mixin ()
   ((%keyword-name :initarg :keyword-name
@@ -109,6 +139,22 @@
                    :suppliedp-variable suppliedp-variable
                    :keyword-name keyword-name)))
 
+(defmethod unparse ((parameter key-parameter))
+  (let ((variable (variable parameter))
+        (keyword-name (keyword-name parameter))
+        (initform (initform parameter))
+        (suppliedp-variable (suppliedp-variable parameter)))
+    (let ((custom-keyword-name-p (or (not (keywordp keyword-name))
+                                     (string/= (symbol-name keyword-name)
+                                               (symbol-name variable)))))
+      (if (or custom-keyword-name-p initform suppliedp-variable)
+          `(,(if custom-keyword-name-p
+                 (list keyword-name variable)
+                 variable)
+             ,initform
+             ,@(when suppliedp-variable (list suppliedp-variable)))
+          variable))))
+
 (defclass key-no-defaulting-parameter (parameter parameter-variable-mixin parameter-keyword-name-mixin)
   ())
 
@@ -129,6 +175,16 @@
                    :variable variable
                    :keyword-name keyword-name)))
 
+(defmethod unparse ((parameter key-no-defaulting-parameter))
+  (let ((variable (variable parameter))
+        (keyword-name (keyword-name parameter)))
+    (let ((custom-keyword-name-p (or (not (keywordp keyword-name))
+                                     (string/= (symbol-name keyword-name)
+                                               (symbol-name variable)))))
+      (if custom-keyword-name-p
+          `((,keyword-name ,variable))
+          variable))))
+
 (defclass aux-parameter (parameter parameter-variable-mixin parameter-initform-mixin)
   ())
 
@@ -142,3 +198,10 @@
     (make-instance 'optional-parameter
                    :variable variable
                    :initform initform)))
+
+(defmethod unparse ((parameter aux-parameter))
+  (let ((variable (variable parameter))
+        (initform (initform parameter)))
+    (if initform
+        `(,variable ,initform)
+        variable)))
