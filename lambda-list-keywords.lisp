@@ -29,6 +29,12 @@
                 :type list
                 :initform nil)))
 
+(defmethod print-object ((section fcll:standard-lambda-list-section) stream)
+  (print-unreadable-object (section stream :type t)
+    (format stream "~S~{ ~S~}"
+            (defsys:name (fcll:lambda-list-keyword section))
+            (mapcar #'unparse (parameters section)))))
+
 (defun %apparent-lambda-list-keyword-p (object)
   (let ((symbol-name (and (symbolp object) (symbol-name object))))
     (and (plusp (length symbol-name)) (char= (char symbol-name 0) #\&))))
