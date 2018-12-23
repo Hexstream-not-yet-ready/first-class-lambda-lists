@@ -24,34 +24,80 @@
                                             :key #'defsys:name :test #'eq)
                                 (list keyword)))))
 
+(defun %process-list (recurse args)
+  (let ((arg-processors (mapcar recurse args)))
+    (lambda (tail)
+      (if tail
+          (let ((all-sections nil))
+            (block nil
+              (mapl (lambda (processors)
+                      (multiple-value-bind (new-tail sections)
+                          (funcall (first processors) tail)
+                        (push sections all-sections)
+                        (unless new-tail
+                          (return))
+                        (unless (eq new-tail tail)
+                          (setf arg-processors (rest processors)
+                                tail new-tail))))
+                    arg-processors))
+            (values tail
+                    (apply #'nconc (nreverse all-sections))
+                    (not arg-processors)))
+          (values tail nil (not arg-processors))))))
+
+(defun %make-or-processor-dispenser (list)
+  (let* ((elements (copy-list list))
+         (previous-cons (last elements)))
+    (nconc elements elements)
+    (lambda ()
+      (block nil
+        (multiple-value-bind (new-tail sections donep) (funcall (first elements))
+          (let ((next (cdr elements)))
+            (when donep
+              (if (eq next elements)
+                  (return (values new-tail sections t))
+                  (setf (rest previous-cons) next)))
+            (shiftf previous-cons elements next)
+            (values new-tail sections nil)))))))
+
+(defun %process-or (recurse args)
+  (let ((arg-processor-dispenser (%make-or-processor-dispenser
+                                  (mapcar (lambda (arg)
+                                            (funcall recurse arg t))
+                                          args))))
+    (lambda (tail)
+      (if tail
+          (let ((all-sections nil))
+            (block nil
+              (loop
+                 (multiple-value-bind (new-tail sections donep)
+                     (funcall arg-processor-dispenser tail)
+                   (push sections all-sections)
+                   (if (or (eq new-tail tail) donep)
+                       (return)
+                       (setf tail new-tail)))))
+            (values tail
+                    (apply #'nconc (nreverse all-sections))
+                    t))
+          (values tail nil t)))))
+
+;;; ↑ WORST. CODE. EVER! ↓
+
 (defun %make-parser-maker (keyword-order)
-  (labels ((recurse (spec)
+  (labels ((recurse (spec &optional backtrackp)
              (etypecase spec
                (cons (destructuring-bind (operator &rest args) spec
                        (check-type args cons)
-                       (let ((arg-processors (mapcar #'recurse args)))
-                         (ecase operator
-                           (list (lambda (tail)
-                                   (if tail
-                                       (let ((all-sections nil))
-                                         (block nil
-                                           (mapl (lambda (processors)
-                                                   (multiple-value-bind (new-tail sections)
-                                                       (funcall (first processors) tail)
-                                                     (push sections all-sections)
-                                                     (unless new-tail
-                                                       (return))
-                                                     (unless (eq new-tail tail)
-                                                       (setf arg-processors (rest processors)
-                                                             tail new-tail))))
-                                                 arg-processors))
-                                         (values tail (apply #'nconc (nreverse all-sections))))
-                                       (values tail nil))))
-                           (or (lambda (tail)
-                                 (if tail
-                                     '?
-                                     (values tail nil))))))))
-               (fcll:lambda-list-keyword (parser spec)))))
+                       (ecase operator
+                         (list (%process-list #'recurse args))
+                         (or (%process-or #'recurse args)))))
+               (fcll:lambda-list-keyword
+                (let ((parser (parser spec)))
+                  (if backtrackp
+                      (lambda (tail)
+                        (multiple-value-bind (new-tail sections) (funcall parser)
+                          (values new-tail sections (not (eq new-tail tail)))))
+                      parser))))))
     (recurse keyword-order)))
 
 (defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key)
