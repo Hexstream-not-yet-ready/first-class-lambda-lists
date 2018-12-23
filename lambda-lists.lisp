@@ -13,6 +13,12 @@
   (setf (slot-value instance '%kind)
         (defsys:locate *lambda-list-kind-definitions* kind)))
 
+(defmethod print-object ((lambda-list fcll:standard-lambda-list) stream)
+  (print-unreadable-object (lambda-list stream :type t)
+    (format stream "~S ~S"
+            (defsys:name (kind lambda-list))
+            (%sections lambda-list))))
+
 (defgeneric reset (object))
 
 (defmethod reset ((lambda-list fcll:standard-lambda-list))
@@ -23,4 +29,4 @@
 
 (defmethod parse-lambda-list ((lambda-list fcll:standard-lambda-list) specification)
   (setf (slot-value lambda-list '%sections)
-        (funcall (funcall (parser-maker (kind lambda-list))) specification)))
+        (funcall (parser (kind lambda-list)) specification)))

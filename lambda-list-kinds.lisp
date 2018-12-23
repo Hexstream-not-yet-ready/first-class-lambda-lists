@@ -19,7 +19,7 @@
    (%default :initarg :default
              :reader default
              :initform nil)
-   (%parser-maker :reader parser-maker)))
+   (%parser :reader parser)))
 
 (defun %compute-keyword-order (keywords keyword-order)
   (%transform-keyword-order keyword-order
@@ -91,7 +91,7 @@
 
 ;;; ↑ WORST. CODE. EVER! ↓
 
-(defun %make-parser-maker (keyword-order)
+(defun %make-parser (keyword-order)
   (labels ((recurse (spec &optional backtrackp)
              (etypecase spec
                (cons (destructuring-bind (operator &rest args) spec
@@ -108,7 +108,13 @@
                             (values new-tail sections (not (eq new-tail tail))))))
                       (lambda ()
                         parser)))))))
-    (recurse keyword-order)))
+    (let ((parser-maker (recurse keyword-order)))
+      (lambda (tail)
+        (multiple-value-bind (new-tail sections donep)
+            (funcall (funcall parser-maker) tail)
+          (if new-tail
+              (error "Could not completely parse lambda list:~%~S~%new-tail: ~S~%donep: ~S~%sections: ~S" tail new-tail donep sections)
+              sections))))))
 
 (defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key)
   (print (defsys:name kind))
@@ -120,8 +126,8 @@
           keywords
           (slot-value kind '%keyword-order)
           (print keyword-order)
-          (slot-value kind '%parser-maker)
-          (%make-parser-maker keyword-order))))
+          (slot-value kind '%parser)
+          (%make-parser keyword-order))))
 
 (defun %derive-keywords-list (&key (from :ordinary) add remove replace)
   (let ((canonicalize (%make-keyword-canonicalizer)))
