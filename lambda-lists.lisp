@@ -3,13 +3,15 @@
 (defclass fcll:lambda-list () ())
 
 (defclass fcll:standard-lambda-list (fcll:lambda-list)
-  ((%kind :initarg :kind
-          :reader kind
-          :type fcll:lambda-list-kind
-          :initform (error "Must supply a lambda list kind."))
+  ((%kind :reader kind
+          :type fcll:lambda-list-kind)
    (%sections :reader %sections
               :type list
               :initform nil)))
+
+(defmethod shared-initialize :after ((instance fcll:standard-lambda-list) slot-names &key kind)
+  (setf (slot-value instance '%kind)
+        (defsys:locate *lambda-list-kind-definitions* kind)))
 
 (defgeneric reset (object))
 
@@ -21,4 +23,4 @@
 
 (defmethod parse-lambda-list ((lambda-list fcll:standard-lambda-list) specification)
   (setf (slot-value lambda-list '%sections)
-        (funcall (parser-maker (kind lambda-list)) specification)))
+        (funcall (funcall (parser-maker (kind lambda-list))) specification)))
