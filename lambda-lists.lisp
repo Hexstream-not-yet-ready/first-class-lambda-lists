@@ -32,8 +32,8 @@
   (setf (slot-value lambda-list '%sections) nil))
 
 
-(defgeneric parse-lambda-list (lambda-list specification))
+(defgeneric fcll:parse (lambda-list specification))
 
-(defmethod parse-lambda-list ((lambda-list fcll:standard-lambda-list) specification)
+(defmethod fcll:parse ((lambda-list fcll:standard-lambda-list) specification)
   (setf (slot-value lambda-list '%sections)
         (funcall (parser (kind lambda-list)) specification)))

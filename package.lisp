@@ -16,4 +16,6 @@
            #:standard-lambda-list-kind
 
            #:lambda-list
-           #:standard-lambda-list))
+           #:standard-lambda-list
+           #:parse
+           #:unparse))
