@@ -41,6 +41,7 @@
                               (funcall (first processors) tail)
                             (push sections all-sections)
                             (unless new-tail
+                              (setf tail new-tail)
                               (return))
                             (unless (eq new-tail tail)
                               (setf arg-processors (rest processors)
