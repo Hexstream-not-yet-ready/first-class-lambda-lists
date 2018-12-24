@@ -133,7 +133,7 @@
                     (destructuring-bind (variable keyword-name) variable-and/or-keyword-name
                       (values variable keyword-name)))
               (values variable initform suppliedp-variable keyword-name))))
-    (make-instance 'optional-parameter
+    (make-instance 'key-parameter
                    :variable variable
                    :initform initform
                    :suppliedp-variable suppliedp-variable

@@ -57,7 +57,7 @@
         (check-type tail cons)
         (let ((first (first tail)))
           (if (not (%apparent-lambda-list-keyword-p first))
-              (funcall parameters-parser (rest tail))
+              (funcall parameters-parser tail)
               (values tail nil))))))
 
 (defun %make-parameters-parser (lambda-list-keyword)
