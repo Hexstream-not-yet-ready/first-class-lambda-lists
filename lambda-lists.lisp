@@ -7,11 +7,24 @@
           :type fcll:lambda-list-kind)
    (%sections :reader %sections
               :type list
-              :initform nil)))
+              :initform nil)
+   (%adjustable :type boolean)))
 
-(defmethod shared-initialize :after ((instance fcll:standard-lambda-list) slot-names &key kind)
+(defmethod initialize-instance :before ((instance fcll:standard-lambda-list)
+                                        &key
+                                          (parse nil parse-supplied-p)
+                                          (adjustable (if parse-supplied-p nil t)))
+  (declare (ignore parse))
+  (check-type adjustable boolean)
+  (setf (slot-value instance '%adjustable)
+        adjustable))
+
+(defmethod shared-initialize :after ((instance fcll:standard-lambda-list) slot-names
+                                     &key kind (parse nil parse-supplied-p))
   (setf (slot-value instance '%kind)
-        (defsys:locate *lambda-list-kind-definitions* kind)))
+        (defsys:locate *lambda-list-kind-definitions* kind))
+  (when parse-supplied-p
+    (fcll:parse instance parse)))
 
 (defmethod fcll:unparse ((lambda-list fcll:standard-lambda-list))
   (reduce #'append
@@ -37,3 +50,10 @@
 (defmethod fcll:parse ((lambda-list fcll:standard-lambda-list) specification)
   (setf (slot-value lambda-list '%sections)
         (funcall (parser (kind lambda-list)) specification)))
+
+(defmethod fcll:parse ((kind symbol) specification)
+  (fcll:parse (defsys:locate *lambda-list-kind-definitions* kind)
+              specification))
+
+(defmethod fcll:parse ((kind fcll:lambda-list-kind) specification)
+  (make-instance 'fcll:standard-lambda-list :kind kind :parse specification))
