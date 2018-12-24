@@ -2,11 +2,11 @@
 
 (defclass parameter () ())
 
-(defgeneric unparse (object))
+(defgeneric fcll:unparse (object))
 
 (defmethod print-object ((parameter parameter) stream)
   (print-unreadable-object (parameter stream :type t)
-    (prin1 (unparse parameter) stream)))
+    (prin1 (fcll:unparse parameter) stream)))
 
 (defclass parameter-variable-mixin ()
   ((%variable :initarg :variable
@@ -31,7 +31,7 @@
   (check-type parameter symbol)
   (make-instance 'simple-parameter :variable parameter))
 
-(defmethod unparse ((parameter simple-parameter))
+(defmethod fcll:unparse ((parameter simple-parameter))
   (variable parameter))
 
 (defclass required-parameter (parameter parameter-variable-mixin)
@@ -41,7 +41,7 @@
   (check-type parameter symbol)
   (make-instance 'required-parameter :variable parameter))
 
-(defmethod unparse ((parameter required-parameter))
+(defmethod fcll:unparse ((parameter required-parameter))
   (variable parameter))
 
 (defclass specializable-parameter (required-parameter)
@@ -60,7 +60,7 @@
                    :variable variable
                    :specializer specializer)))
 
-(defmethod unparse ((parameter specializable-parameter))
+(defmethod fcll:unparse ((parameter specializable-parameter))
   (let ((variable (variable parameter))
         (specializer (specializer parameter)))
     (if (eq specializer t)
@@ -82,7 +82,7 @@
                    :initform initform
                    :suppliedp-variable suppliedp-variable)))
 
-(defmethod unparse ((parameter optional-parameter))
+(defmethod fcll:unparse ((parameter optional-parameter))
   (let ((variable (variable parameter))
         (initform (initform parameter))
         (suppliedp-variable (suppliedp-variable parameter)))
@@ -100,7 +100,7 @@
                              ((cons symbol null)
                               (car parameter)))))
 
-(defmethod unparse ((parameter optional-no-defaulting-parameter))
+(defmethod fcll:unparse ((parameter optional-no-defaulting-parameter))
   (variable parameter))
 
 (defclass parameter-keyword-name-mixin ()
@@ -139,7 +139,7 @@
                    :suppliedp-variable suppliedp-variable
                    :keyword-name keyword-name)))
 
-(defmethod unparse ((parameter key-parameter))
+(defmethod fcll:unparse ((parameter key-parameter))
   (let ((variable (variable parameter))
         (keyword-name (keyword-name parameter))
         (initform (initform parameter))
@@ -175,7 +175,7 @@
                    :variable variable
                    :keyword-name keyword-name)))
 
-(defmethod unparse ((parameter key-no-defaulting-parameter))
+(defmethod fcll:unparse ((parameter key-no-defaulting-parameter))
   (let ((variable (variable parameter))
         (keyword-name (keyword-name parameter)))
     (let ((custom-keyword-name-p (or (not (keywordp keyword-name))
@@ -199,7 +199,7 @@
                    :variable variable
                    :initform initform)))
 
-(defmethod unparse ((parameter aux-parameter))
+(defmethod fcll:unparse ((parameter aux-parameter))
   (let ((variable (variable parameter))
         (initform (initform parameter)))
     (if initform
