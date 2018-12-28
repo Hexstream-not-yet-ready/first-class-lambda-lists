@@ -110,12 +110,13 @@
                    :suppliedp-variable suppliedp-variable)))
 
 (defmethod fcll:unparse ((parameter optional-parameter))
-  (let ((variable (variable parameter))
-        (initform (initform parameter))
-        (suppliedp-variable (suppliedp-variable parameter)))
-    (if (or initform suppliedp-variable (typep variable 'fcll:lambda-list))
+  (let* ((variable (variable parameter))
+         (initform (initform parameter))
+         (suppliedp-variable (suppliedp-variable parameter))
+         (initform-or-suppliedp (or initform suppliedp-variable)))
+    (if (or initform-or-suppliedp (typep variable 'fcll:lambda-list))
         `(,(%unparse-recursable-variable variable)
-          ,initform
+          ,@(when initform-or-suppliedp (list initform))
           ,@(when suppliedp-variable (list suppliedp-variable)))
         variable)))
 
@@ -163,7 +164,7 @@
                     (values (or variable-and/or-keyword-name
                                 (%parse-recursable-variable variable-and/or-keyword-name))
                             (%keywordize variable-and/or-keyword-name))
-                    (destructuring-bind (variable keyword-name) variable-and/or-keyword-name
+                    (destructuring-bind (keyword-name variable) variable-and/or-keyword-name
                       (values (%parse-recursable-variable variable) keyword-name)))
               (values variable initform suppliedp-variable keyword-name))))
     (make-instance 'key-parameter
@@ -189,7 +190,7 @@
                                                recursivep))
                  (list keyword-name (%unparse-recursable-variable variable))
                  variable)
-             ,initform
+             ,@(when (or initform suppliedp-variable) (list initform))
              ,@(when suppliedp-variable (list suppliedp-variable)))
           variable))))
 
