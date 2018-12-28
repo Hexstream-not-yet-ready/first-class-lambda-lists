@@ -207,7 +207,7 @@
                 (if (symbolp variable-and/or-keyword-name)
                     (values variable-and/or-keyword-name
                             (%keywordize variable-and/or-keyword-name))
-                    (destructuring-bind (variable keyword-name) variable-and/or-keyword-name
+                    (destructuring-bind (keyword-name variable) variable-and/or-keyword-name
                       (values variable keyword-name)))
               (values variable keyword-name))))
     (make-instance 'key-no-defaulting-parameter
