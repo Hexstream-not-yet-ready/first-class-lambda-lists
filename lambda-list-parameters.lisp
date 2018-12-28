@@ -10,8 +10,28 @@
 
 (defclass parameter-variable-mixin ()
   ((%variable :initarg :variable
-              :reader variable
-              :type symbol)))
+              :reader variable)))
+
+(defclass parameter-simple-variable-mixin (parameter-variable-mixin)
+  ((%variable :type symbol)))
+
+(defclass parameter-recursable-variable-mixin (parameter-variable-mixin)
+  ((%variable :type (or symbol fcll:lambda-list))))
+
+(defparameter *parse-recursable-variable*
+  (lambda (variable)
+    (declare (ignore variable))
+    (error "Tried to parse a recursable variable in a non-recursive context.")))
+
+(defun %parse-recursable-variable (variable)
+  (etypecase variable
+    (list (funcall *parse-recursable-variable* variable))
+    (symbol variable)))
+
+(defun %unparse-recursable-variable (variable-or-lambda-list)
+  (etypecase variable-or-lambda-list
+    (symbol variable-or-lambda-list)
+    (fcll:lambda-list (unparse variable-or-lambda-list))))
 
 (defclass parameter-initform-mixin ()
   ((%initform :initarg :initform
@@ -24,25 +44,27 @@
                         :type symbol
                         :initform nil)))
 
-(defclass simple-parameter (parameter parameter-variable-mixin)
+(defclass simple-parameter (parameter parameter-simple-variable-mixin)
   ())
 
 (defun %parse-simple-parameter (parameter)
   (check-type parameter symbol)
   (make-instance 'simple-parameter :variable parameter))
 
+(defun %parse-simple-recursable-parameter (parameter)
+  (make-instance 'simple-parameter :variable (%parse-recursable-variable parameter)))
+
 (defmethod fcll:unparse ((parameter simple-parameter))
   (variable parameter))
 
-(defclass required-parameter (parameter parameter-variable-mixin)
+(defclass required-parameter (parameter parameter-recursable-variable-mixin)
   ())
 
 (defun %parse-required-parameter (parameter)
-  (check-type parameter symbol)
-  (make-instance 'required-parameter :variable parameter))
+  (make-instance 'required-parameter :variable (%parse-recursable-variable parameter)))
 
 (defmethod fcll:unparse ((parameter required-parameter))
-  (variable parameter))
+  (%unparse-recursable-variable (variable parameter)))
 
 (defclass specializable-parameter (required-parameter)
   ((%specializer :initarg :specializer
@@ -52,10 +74,11 @@
 (defun %parse-specializable-parameter (parameter)
   (multiple-value-bind (variable specializer)
       (if (symbolp parameter)
-          (values parameter t)
+          (values (or parameter (%parse-recursable-variable parameter))
+                  t)
           (destructuring-bind (variable &optional (specializer t))
               parameter
-            (values variable specializer)))
+            (values (%parse-recursable-variable variable) specializer)))
     (make-instance 'specializable-parameter
                    :variable variable
                    :specializer specializer)))
@@ -63,20 +86,24 @@
 (defmethod fcll:unparse ((parameter specializable-parameter))
   (let ((variable (variable parameter))
         (specializer (specializer parameter)))
-    (if (eq specializer t)
+    (if (and (eq specializer t) (not (typep variable 'fcll:lambda-list)))
         variable
-        (list variable specializer))))
+        (list (%unparse-recursable-variable variable) specializer))))
 
-(defclass optional-parameter (parameter parameter-variable-mixin parameter-initform-mixin parameter-suppliedp-variable-mixin)
+(defclass optional-parameter (parameter parameter-recursable-variable-mixin parameter-initform-mixin parameter-suppliedp-variable-mixin)
   ())
 
 (defun %parse-optional-parameter (parameter)
   (multiple-value-bind (variable initform suppliedp-variable)
       (if (symbolp parameter)
-          (values parameter nil nil)
+          (values (or parameter (%parse-recursable-variable parameter))
+                  nil
+                  nil)
           (destructuring-bind (variable &optional initform suppliedp-variable)
               parameter
-            (values variable initform suppliedp-variable)))
+            (values (%parse-recursable-variable variable)
+                    initform
+                    suppliedp-variable)))
     (make-instance 'optional-parameter
                    :variable variable
                    :initform initform
@@ -86,11 +113,13 @@
   (let ((variable (variable parameter))
         (initform (initform parameter))
         (suppliedp-variable (suppliedp-variable parameter)))
-    (if (or initform suppliedp-variable)
-        `(,variable ,initform ,@(when suppliedp-variable (list suppliedp-variable)))
+    (if (or initform suppliedp-variable (typep variable 'fcll:lambda-list))
+        `(,(%unparse-recursable-variable variable)
+          ,initform
+          ,@(when suppliedp-variable (list suppliedp-variable)))
         variable)))
 
-(defclass optional-no-defaulting-parameter (parameter parameter-variable-mixin)
+(defclass optional-no-defaulting-parameter (parameter parameter-simple-variable-mixin)
   ())
 
 (defun %parse-optional-no-defaulting-parameter (parameter)
@@ -113,7 +142,7 @@
     (setf (slot-value instance '%keyword-name)
           (%keywordize (variable instance)))))
 
-(defclass key-parameter (parameter parameter-variable-mixin parameter-keyword-name-mixin
+(defclass key-parameter (parameter parameter-recursable-variable-mixin parameter-keyword-name-mixin
                                    parameter-initform-mixin parameter-suppliedp-variable-mixin)
   ())
 
@@ -123,15 +152,19 @@
 (defun %parse-key-parameter (parameter)
   (multiple-value-bind (variable initform suppliedp-variable keyword-name)
       (if (symbolp parameter)
-          (values parameter nil nil (%keywordize parameter))
+          (values (or parameter (%parse-recursable-variable parameter))
+                  nil
+                  nil
+                  (%keywordize parameter))
           (destructuring-bind (variable-and/or-keyword-name &optional initform suppliedp-variable)
               parameter
             (multiple-value-bind (variable keyword-name)
                 (if (symbolp variable-and/or-keyword-name)
-                    (values variable-and/or-keyword-name
+                    (values (or variable-and/or-keyword-name
+                                (%parse-recursable-variable variable-and/or-keyword-name))
                             (%keywordize variable-and/or-keyword-name))
                     (destructuring-bind (variable keyword-name) variable-and/or-keyword-name
-                      (values variable keyword-name)))
+                      (values (%parse-recursable-variable variable) keyword-name)))
               (values variable initform suppliedp-variable keyword-name))))
     (make-instance 'key-parameter
                    :variable variable
@@ -146,16 +179,21 @@
         (suppliedp-variable (suppliedp-variable parameter)))
     (let ((custom-keyword-name-p (or (not (keywordp keyword-name))
                                      (string/= (symbol-name keyword-name)
-                                               (symbol-name variable)))))
-      (if (or custom-keyword-name-p initform suppliedp-variable)
-          `(,(if custom-keyword-name-p
-                 (list keyword-name variable)
+                                               (symbol-name variable))))
+          (recursivep :untested))
+      ;; Do the "expensive" TYPEP only once, and only as a last resort.
+      (if (or custom-keyword-name-p initform suppliedp-variable
+              (setf recursivep (typep variable 'fcll:lambda-list)))
+          `(,(if (or custom-keyword-name-p (if (eq recursivep :untested)
+                                               (typep variable 'fcll:lambda-list)
+                                               recursivep))
+                 (list keyword-name (%unparse-recursable-variable variable))
                  variable)
              ,initform
              ,@(when suppliedp-variable (list suppliedp-variable)))
           variable))))
 
-(defclass key-no-defaulting-parameter (parameter parameter-variable-mixin parameter-keyword-name-mixin)
+(defclass key-no-defaulting-parameter (parameter parameter-simple-variable-mixin parameter-keyword-name-mixin)
   ())
 
 (defun %parse-key-no-defaulting-parameter (parameter)
@@ -185,7 +223,7 @@
           `((,keyword-name ,variable))
           variable))))
 
-(defclass aux-parameter (parameter parameter-variable-mixin parameter-initform-mixin)
+(defclass aux-parameter (parameter parameter-simple-variable-mixin parameter-initform-mixin)
   ())
 
 (defun %parse-aux-parameter (parameter)

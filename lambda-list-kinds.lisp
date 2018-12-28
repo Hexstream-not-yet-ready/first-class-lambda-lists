@@ -15,6 +15,7 @@
    (%keyword-order :reader keyword-order)
    (%recurse :initarg :recurse
              :reader recurse
+             :type (or null fcll:lambda-list-kind)
              :initform nil)
    (%default :initarg :default
              :reader default
@@ -56,9 +57,10 @@
   (let* ((elements (copy-list list))
          (previous-cons (last elements)))
     (nconc elements elements)
-    (lambda ()
+    (lambda (tail)
       (block nil
-        (multiple-value-bind (new-tail sections donep) (funcall (first elements))
+        (multiple-value-bind (new-tail sections donep)
+            (funcall (first elements) tail)
           (let ((next (cdr elements)))
             (when donep
               (if (eq next elements)
@@ -82,9 +84,9 @@
                      (multiple-value-bind (new-tail sections donep)
                          (funcall arg-processor-dispenser tail)
                        (push sections all-sections)
-                       (if (or (eq new-tail tail) donep)
-                           (return)
-                           (setf tail new-tail)))))
+                       (setf tail new-tail)
+                       (when (or donep (not tail))
+                         (return)))))
                 (values tail
                         (apply #'nconc (nreverse all-sections))
                         t))
@@ -92,7 +94,7 @@
 
 ;;; ↑ WORST. CODE. EVER! ↓
 
-(defun %make-parser (keyword-order)
+(defun %make-parser (keyword-order recursive-lambda-list-kind)
   (labels ((recurse (spec &optional backtrackp)
              (etypecase spec
                (cons (destructuring-bind (operator &rest args) spec
@@ -105,14 +107,22 @@
                   (if backtrackp
                       (lambda ()
                         (lambda (tail)
-                          (multiple-value-bind (new-tail sections) (funcall parser)
+                          (multiple-value-bind (new-tail sections) (funcall parser tail)
                             (values new-tail sections (not (eq new-tail tail))))))
                       (lambda ()
                         parser)))))))
     (let ((parser-maker (recurse keyword-order)))
       (lambda (tail)
         (multiple-value-bind (new-tail sections donep)
-            (funcall (funcall parser-maker) tail)
+            (let ((parser (funcall parser-maker)))
+              (if recursive-lambda-list-kind
+                  (let ((*parse-recursable-variable*
+                         (lambda (variable)
+                           (make-instance 'standard-lambda-list
+                                          :kind recursive-lambda-list-kind
+                                          :parse variable))))
+                    (funcall parser tail))
+                  (funcall parser tail)))
           (if new-tail
               (error "Could not completely parse lambda list:~@
                       ~S~%new-tail: ~S~%donep: ~S~%sections: ~S"
@@ -120,17 +130,24 @@
               sections))))))
 
 (defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key)
-  (print (defsys:name kind))
   (let* ((keywords (mapcar (%make-keyword-canonicalizer) (slot-value kind '%keywords)))
          (keyword-order (%compute-keyword-order
                          keywords
-                         (tree (defsys:locate 'fcll:lambda-list-keyword-order :standard)))))
+                         (tree (defsys:locate 'fcll:lambda-list-keyword-order :standard))))
+         (recursive-lambda-list-kind
+          (let ((recurse-kind (slot-value kind '%recurse)))
+            (when recurse-kind
+              (if (eq recurse-kind t)
+                  kind
+                  (defsys:locate *lambda-list-kind-definitions* recurse-kind))))))
     (setf (slot-value kind '%keywords)
           keywords
           (slot-value kind '%keyword-order)
-          (print keyword-order)
+          keyword-order
+          (slot-value kind '%recurse)
+          recursive-lambda-list-kind
           (slot-value kind '%parser)
-          (%make-parser keyword-order))))
+          (%make-parser keyword-order recursive-lambda-list-kind))))
 
 (defun %derive-keywords-list (&key (from :ordinary) add remove replace)
   (let ((canonicalize (%make-keyword-canonicalizer)))
@@ -172,7 +189,7 @@
 
 (define (fcll:lambda-list-kind :destructuring) destructuring-bind
   (:derive :add (&whole &body))
-  :recurse :self)
+  :recurse t)
 
 (define (fcll:lambda-list-kind :macro) defmacro
   (:derive :from :destructuring :add :&environment-not-before-&whole)

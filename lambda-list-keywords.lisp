@@ -14,6 +14,10 @@
    (%parameter-parser :initarg :parameter-parser
                       :reader parameter-parser
                       :type (or function symbol))
+   (%recursablep :initarg :recursablep
+                 :reader recursablep
+                 :type boolean
+                 :initform nil)
    (%parser :reader parser
             :type function)))
 
@@ -94,7 +98,9 @@
           (let ((arity (arity instance)))
             (ecase arity
               (0 nil)
-              (1 #'%parse-simple-parameter)
+              (1 (if (recursablep instance)
+                     #'%parse-simple-recursable-parameter
+                     #'%parse-simple-parameter))
               (t (error "Must supply a parameter-parser for arity ~S." arity))))))
   (setf (slot-value instance '%parser)
         (%make-lambda-list-keyword-parser instance)))
@@ -119,25 +125,31 @@
 
 (define (fcll:lambda-list-keyword :required) t
   :introducer nil
-  :parameter-parser #'%parse-required-parameter)
+  :parameter-parser #'%parse-required-parameter
+  :recursablep t)
 
 (define (fcll:lambda-list-keyword :required-specializable) t
   :introducer nil
-  :parameter-parser #'%parse-specializable-parameter)
+  :parameter-parser #'%parse-specializable-parameter
+  :recursablep t)
 
 (define (fcll:lambda-list-keyword &optional) t
-  :parameter-parser #'%parse-optional-parameter)
+  :parameter-parser #'%parse-optional-parameter
+  :recursablep t)
 
 (define (fcll:lambda-list-keyword :&optional-no-defaulting) t
   :introducer '&optional
   :parameter-parser #'%parse-optional-no-defaulting-parameter)
 
-(define (fcll:lambda-list-keyword &rest) 1)
+(define (fcll:lambda-list-keyword &rest) 1
+  :recursablep t)
 
-(define (fcll:lambda-list-keyword &body) 1)
+(define (fcll:lambda-list-keyword &body) 1
+  :recursablep t)
 
 (define (fcll:lambda-list-keyword &key) t
-  :parameter-parser #'%parse-key-parameter)
+  :parameter-parser #'%parse-key-parameter
+  :recursablep t)
 
 (define (fcll:lambda-list-keyword :&key-no-defaulting) t
   :introducer '&key
