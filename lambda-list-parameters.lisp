@@ -23,6 +23,13 @@
     (declare (ignore variable))
     (error "Tried to parse a recursable variable in a non-recursive context.")))
 
+(defparameter *default-initform* nil)
+
+(defun %default-initform (&optional (to-test nil testp))
+  (if testp
+      (equal to-test *default-initform*)
+      *default-initform*))
+
 (defun %parse-recursable-variable (variable)
   (etypecase variable
     (list (funcall *parse-recursable-variable* variable))
@@ -97,9 +104,9 @@
   (multiple-value-bind (variable initform suppliedp-variable)
       (if (symbolp parameter)
           (values (or parameter (%parse-recursable-variable parameter))
-                  nil
+                  (%default-initform)
                   nil)
-          (destructuring-bind (variable &optional initform suppliedp-variable)
+          (destructuring-bind (variable &optional (initform (%default-initform)) suppliedp-variable)
               parameter
             (values (%parse-recursable-variable variable)
                     initform
@@ -112,8 +119,9 @@
 (defmethod fcll:unparse ((parameter optional-parameter))
   (let* ((variable (variable parameter))
          (initform (initform parameter))
+         (initform-not-default-p (not (%default-initform initform)))
          (suppliedp-variable (suppliedp-variable parameter))
-         (initform-or-suppliedp (or initform suppliedp-variable)))
+         (initform-or-suppliedp (or initform-not-default-p suppliedp-variable)))
     (if (or initform-or-suppliedp (typep variable 'fcll:lambda-list))
         `(,(%unparse-recursable-variable variable)
           ,@(when initform-or-suppliedp (list initform))
@@ -154,10 +162,10 @@
   (multiple-value-bind (variable initform suppliedp-variable keyword-name)
       (if (symbolp parameter)
           (values (or parameter (%parse-recursable-variable parameter))
-                  nil
+                  (%default-initform)
                   nil
                   (%keywordize parameter))
-          (destructuring-bind (variable-and/or-keyword-name &optional initform suppliedp-variable)
+          (destructuring-bind (variable-and/or-keyword-name &optional (initform (%default-initform)) suppliedp-variable)
               parameter
             (multiple-value-bind (variable keyword-name)
                 (if (symbolp variable-and/or-keyword-name)
@@ -181,16 +189,17 @@
     (let ((custom-keyword-name-p (or (not (keywordp keyword-name))
                                      (string/= (symbol-name keyword-name)
                                                (symbol-name variable))))
+          (initform-not-default-p (not (%default-initform initform)))
           (recursivep :untested))
       ;; Do the "expensive" TYPEP only once, and only as a last resort.
-      (if (or custom-keyword-name-p initform suppliedp-variable
+      (if (or custom-keyword-name-p initform-not-default-p suppliedp-variable
               (setf recursivep (typep variable 'fcll:lambda-list)))
           `(,(if (or custom-keyword-name-p (if (eq recursivep :untested)
                                                (typep variable 'fcll:lambda-list)
                                                recursivep))
                  (list keyword-name (%unparse-recursable-variable variable))
                  variable)
-             ,@(when (or initform suppliedp-variable) (list initform))
+             ,@(when (or initform-not-default-p suppliedp-variable) (list initform))
              ,@(when suppliedp-variable (list suppliedp-variable)))
           variable))))
 
@@ -234,7 +243,7 @@
           (destructuring-bind (variable &optional initform)
               parameter
             (values variable initform)))
-    (make-instance 'optional-parameter
+    (make-instance 'aux-parameter
                    :variable variable
                    :initform initform)))
 

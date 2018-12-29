@@ -17,9 +17,9 @@
              :reader recurse
              :type (or null fcll:lambda-list-kind)
              :initform nil)
-   (%default :initarg :default
-             :reader default
-             :initform nil)
+   (%default-initform :initarg :default-initform
+                      :reader default-initform
+                      :initform nil)
    (%parser :reader parser)))
 
 (defun %compute-keyword-order (keywords keyword-order)
@@ -212,7 +212,7 @@
 (define (fcll:lambda-list-kind :deftype) deftype
   (:derive :from :macro)
   :recurse :destructuring
-  :default '*)
+  :default-initform ''*)
 
 (define (fcll:lambda-list-kind :define-modify-macro) define-modify-macro
   (:derive :remove (&key &aux)))

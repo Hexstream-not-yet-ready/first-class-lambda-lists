@@ -26,12 +26,23 @@
   (when parse-supplied-p
     (fcll:parse instance parse)))
 
+(defparameter *root-lambda-list* nil)
+
+(defun %call-with-root-lambda-list-setup (lambda-list function)
+  (let* ((root-lambda-list (or *root-lambda-list* lambda-list))
+         (*default-initform* (default-initform (kind root-lambda-list)))
+         (*root-lambda-list* root-lambda-list))
+    (funcall function)))
+
 (defmethod fcll:unparse ((lambda-list fcll:standard-lambda-list))
-  (reduce #'append
-          (%sections lambda-list)
-          :from-end t
-          :key #'fcll:unparse
-          :initial-value nil))
+  (%call-with-root-lambda-list-setup
+   lambda-list
+   (lambda ()
+     (reduce #'append
+             (%sections lambda-list)
+             :from-end t
+             :key #'fcll:unparse
+             :initial-value nil))))
 
 (defmethod print-object ((lambda-list fcll:standard-lambda-list) stream)
   (print-unreadable-object (lambda-list stream :type t)
@@ -49,7 +60,10 @@
 
 (defmethod fcll:parse ((lambda-list fcll:standard-lambda-list) specification)
   (setf (slot-value lambda-list '%sections)
-        (funcall (parser (kind lambda-list)) specification)))
+        (%call-with-root-lambda-list-setup
+         lambda-list
+         (lambda ()
+           (funcall (parser (kind lambda-list)) specification)))))
 
 (defmethod fcll:parse ((kind symbol) specification)
   (fcll:parse (defsys:locate *lambda-list-kind-definitions* kind)
