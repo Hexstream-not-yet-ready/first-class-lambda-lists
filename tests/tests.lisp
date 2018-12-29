@@ -182,7 +182,7 @@
                 &key key1 key2 key3 (key4 t) (key5 '* key5-supplied-p) ((custom-key6 key6) '* key6-supplied-p) ((:custom-key7 key7)) ((key8 key8))
                 &aux aux1 aux2 aux3 (aux4 t)
                 &environment env))
-  (round-trip :ordinary
+  (round-trip :define-modify-macro
               '(required1
                 &optional optional1 (optional2) (optional3 nil) (optional4 nil nil) (optional5 t) (optional6 nil optional6-supplied-p)
                 &rest rest)
