@@ -181,4 +181,24 @@
                 &rest rest
                 &key key1 key2 key3 (key4 t) (key5 '* key5-supplied-p) ((custom-key6 key6) '* key6-supplied-p) ((:custom-key7 key7)) ((key8 key8))
                 &aux aux1 aux2 aux3 (aux4 t)
-                &environment env)))
+                &environment env))
+  (round-trip :ordinary
+              '(required1
+                &optional optional1 (optional2) (optional3 nil) (optional4 nil nil) (optional5 t) (optional6 nil optional6-supplied-p)
+                &rest rest)
+              '(required1
+                &optional optional1 optional2 optional3 optional4 (optional5 t) (optional6 nil optional6-supplied-p)
+                &rest rest))
+  (round-trip :define-method-combination-arguments
+              '(&whole whole
+                required1
+                &optional optional1 (optional2) (optional3 nil) (optional4 nil nil) (optional5 t) (optional6 nil optional6-supplied-p)
+                &rest rest
+                &key key1 key2 ((:key3 key3)) (key4 t) (key5 nil key5-supplied-p) ((custom-key6 key6) nil key6-supplied-p) ((:custom-key7 key7)) ((key8 key8))
+                &aux aux1 (aux2) (aux3 nil) (aux4 t))
+              '(&whole whole
+                required1
+                &optional optional1 optional2 optional3 optional4 (optional5 t) (optional6 nil optional6-supplied-p)
+                &rest rest
+                &key key1 key2 key3 (key4 t) (key5 nil key5-supplied-p) ((custom-key6 key6) nil key6-supplied-p) ((:custom-key7 key7)) ((key8 key8))
+                &aux aux1 aux2 aux3 (aux4 t))))
