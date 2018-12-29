@@ -55,7 +55,9 @@
 
 (defun %make-or-processor-dispenser (list)
   (let* ((elements (copy-list list))
-         (previous-cons (last elements)))
+         (previous-cons (last elements))
+         (elements-count (length elements))
+         (unproductive-streak 0))
     (nconc elements elements)
     (lambda (tail)
       (block nil
@@ -63,10 +65,16 @@
             (funcall (first elements) tail)
           (let ((next (cdr elements)))
             (when donep
-              (if (eq next elements)
-                  (return (values new-tail sections t))
-                  (setf (rest previous-cons) next)))
+              (when (eq next elements)
+                (return (values new-tail sections t)))
+              (setf (rest previous-cons) next
+                    unproductive-streak 0)
+              (decf elements-count))
             (shiftf previous-cons elements next)
+            (when (eq new-tail tail)
+              (incf unproductive-streak)
+              (when (= unproductive-streak elements-count)
+                (return (values new-tail sections :stuck))))
             (values new-tail sections nil)))))))
 
 (defun %make-or-processor-maker (recurse args)
@@ -78,18 +86,18 @@
                                       (mapcar #'funcall arg-processor-makers))))
         (lambda (tail)
           (if tail
-              (let ((all-sections nil))
-                (block nil
-                  (loop
-                     (multiple-value-bind (new-tail sections donep)
-                         (funcall arg-processor-dispenser tail)
-                       (push sections all-sections)
-                       (setf tail new-tail)
-                       (when (or donep (not tail))
-                         (return)))))
+              (let* ((all-sections nil)
+                     (donep (block nil
+                              (loop
+                                 (multiple-value-bind (new-tail sections donep)
+                                     (funcall arg-processor-dispenser tail)
+                                   (push sections all-sections)
+                                   (setf tail new-tail)
+                                   (when (or donep (not tail))
+                                     (return donep)))))))
                 (values tail
                         (apply #'nconc (nreverse all-sections))
-                        t))
+                        (not (eq donep :stuck))))
               (values tail nil t)))))))
 
 ;;; ↑ WORST. CODE. EVER! ↓
