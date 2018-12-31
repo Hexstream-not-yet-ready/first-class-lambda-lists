@@ -1,5 +1,5 @@
-(cl:defpackage #:first-class-lambda-lists
-  (:nicknames #:fcll)
+(cl:defpackage #:fcll
+  (:nicknames #:first-class-lambda-lists)
   (:use #:cl)
   (:shadow #:variable)
   (:import-from #:definitions-systems #:define)
