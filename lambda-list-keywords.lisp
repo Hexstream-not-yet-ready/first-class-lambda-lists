@@ -18,6 +18,10 @@
                  :reader recursablep
                  :type boolean
                  :initform nil)
+   (%parser-maker :initarg :parser-maker
+                  :reader %parser-maker
+                  :type (or function symbol)
+                  :initform '%make-lambda-list-keyword-parser)
    (%parser :reader parser
             :type function)))
 
@@ -45,6 +49,17 @@
     (format stream "~S~{ ~S~}"
             (defsys:name (fcll:lambda-list-keyword section))
             (mapcar #'fcll:unparse (parameters section)))))
+
+(defclass standard-&key-section (fcll:standard-lambda-list-section)
+  ((%allow-other-keys-p :initarg :allow-other-keys-p
+                        :reader allow-other-keys-p
+                        :type boolean
+                        :initform nil)))
+
+(defmethod fcll:unparse ((section standard-&key-section))
+  (if (allow-other-keys-p section)
+      (append (call-next-method) '(&allow-other-keys))
+      (call-next-method)))
 
 (defun %apparent-lambda-list-keyword-p (object)
   (let ((symbol-name (and (symbolp object) (symbol-name object))))
@@ -90,6 +105,21 @@
   (%make-introducer-parser (introducer lambda-list-keyword)
                            (%make-parameters-parser lambda-list-keyword)))
 
+(defun %make-&key-parser (lambda-list-keyword)
+  (%make-introducer-parser
+   (introducer lambda-list-keyword)
+   (let ((parameter-parser (parameter-parser lambda-list-keyword)))
+     (lambda (tail)
+       (let* ((end (member-if #'%apparent-lambda-list-keyword-p tail))
+              (head (ldiff tail end))
+              (allow-other-keys-p (when (eq (first end) '&allow-other-keys)
+                                    (setf end (rest end))
+                                    t)))
+         (values end (list (make-instance 'standard-&key-section
+                                          :lambda-list-keyword lambda-list-keyword
+                                          :parameters (map-into head parameter-parser head)
+                                          :allow-other-keys-p allow-other-keys-p))))))))
+
 (defmethod shared-initialize :after ((instance fcll:standard-lambda-list-keyword) slot-names &key)
   (unless (slot-boundp instance '%introducer)
     (setf (slot-value instance '%introducer) (defsys:name instance)))
@@ -103,7 +133,7 @@
                      #'%parse-simple-parameter))
               (t (error "Must supply a parameter-parser for arity ~S." arity))))))
   (setf (slot-value instance '%parser)
-        (%make-lambda-list-keyword-parser instance)))
+        (funcall (%parser-maker instance) instance)))
 
 (defun %make-keyword-canonicalizer ()
   (let ((defs *lambda-list-keyword-definitions*))
@@ -149,7 +179,8 @@
 
 (define (fcll:lambda-list-keyword &key) t
   :parameter-parser #'%parse-key-parameter
-  :recursablep t)
+  :recursablep t
+  :parser-maker '%make-&key-parser)
 
 (define (fcll:lambda-list-keyword :&key-no-defaulting) t
   :introducer '&key

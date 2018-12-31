@@ -75,7 +75,7 @@
                  i-required1
                  &optional i-optional1 (i-optional2) (i-optional3 nil) (i-optional4 nil nil) (i-optional5 t) (i-optional6 nil i-optional6-supplied-p)
                  &body i-rest
-                 &key i-key1 i-key2 ((:i-key3 i-key3)) (i-key4 t) (i-key5 nil i-key5-supplied-p) ((i-custom-key6 i-key6) nil i-key6-supplied-p) ((:i-custom-key7 i-key7)) ((i-key8 i-key8))
+                 &key i-key1 i-key2 ((:i-key3 i-key3)) (i-key4 t) (i-key5 nil i-key5-supplied-p) ((i-custom-key6 i-key6) nil i-key6-supplied-p) ((:i-custom-key7 i-key7)) ((i-key8 i-key8)) &allow-other-keys
                  &aux i-aux1 (i-aux2) (i-aux3 nil) (i-aux4 t))
                 &optional optional1 (optional2) (optional3 nil) (optional4 nil nil) (optional5 t) (optional6 nil optional6-supplied-p)
                 &rest rest
@@ -88,7 +88,7 @@
                  i-required1
                  &optional i-optional1 i-optional2 i-optional3 i-optional4 (i-optional5 t) (i-optional6 nil i-optional6-supplied-p)
                  &body i-rest
-                 &key i-key1 i-key2 i-key3 (i-key4 t) (i-key5 nil i-key5-supplied-p) ((i-custom-key6 i-key6) nil i-key6-supplied-p) ((:i-custom-key7 i-key7)) ((i-key8 i-key8))
+                 &key i-key1 i-key2 i-key3 (i-key4 t) (i-key5 nil i-key5-supplied-p) ((i-custom-key6 i-key6) nil i-key6-supplied-p) ((:i-custom-key7 i-key7)) ((i-key8 i-key8)) &allow-other-keys
                  &aux i-aux1 i-aux2 i-aux3 (i-aux4 t))
                 &optional optional1 optional2 optional3 optional4 (optional5 t) (optional6 nil optional6-supplied-p)
                 &rest rest
@@ -99,14 +99,14 @@
                 required1
                 &optional optional1 (optional2) (optional3 nil) (optional4 nil nil) (optional5 t) (optional6 nil optional6-supplied-p)
                 &rest rest
-                &key key1 key2 ((:key3 key3)) (key4 t) (key5 nil key5-supplied-p) ((custom-key6 key6) nil key6-supplied-p) ((:custom-key7 key7)) ((key8 key8))
+                &key key1 key2 ((:key3 key3)) (key4 t) (key5 nil key5-supplied-p) ((custom-key6 key6) nil key6-supplied-p) ((:custom-key7 key7)) ((key8 key8)) &allow-other-keys
                 &aux aux1 (aux2) (aux3 nil) (aux4 t)
                 &environment env)
               '(&whole whole
                 required1
                 &optional optional1 optional2 optional3 optional4 (optional5 t) (optional6 nil optional6-supplied-p)
                 &rest rest
-                &key key1 key2 key3 (key4 t) (key5 nil key5-supplied-p) ((custom-key6 key6) nil key6-supplied-p) ((:custom-key7 key7)) ((key8 key8))
+                &key key1 key2 key3 (key4 t) (key5 nil key5-supplied-p) ((custom-key6 key6) nil key6-supplied-p) ((:custom-key7 key7)) ((key8 key8)) &allow-other-keys
                 &aux aux1 aux2 aux3 (aux4 t)
                 &environment env))
   (round-trip :boa
