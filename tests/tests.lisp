@@ -9,6 +9,9 @@
 (defun round-trip (kind specification &optional (result specification))
   (is equal result (fcll:unparse (make-instance 'fcll:standard-lambda-list :kind kind :parse specification))))
 
+(defun fails (kind specification)
+  (fail (make-instance 'fcll:standard-lambda-list :kind kind :parse specification) 'error))
+
 (define-test "main"
   (round-trip :ordinary
               '(required1
@@ -201,4 +204,14 @@
                 &optional optional1 optional2 optional3 optional4 (optional5 t) (optional6 nil optional6-supplied-p)
                 &rest rest
                 &key key1 key2 key3 (key4 t) (key5 nil key5-supplied-p) ((custom-key6 key6) nil key6-supplied-p) ((:custom-key7 key7)) ((key8 key8))
-                &aux aux1 aux2 aux3 (aux4 t))))
+                &aux aux1 aux2 aux3 (aux4 t)))
+  (fails :ordinary '(&optional optional1 &optional optional2))
+  (fails :ordinary '(&rest))
+  (fails :ordinary '(&rest foo bar))
+  (fails :ordinary '(&fake))
+  (fails :ordinary '(&rest rest &optional))
+  (fails :ordinary '(&environment env))
+  (fails :macro '((&environment env)))
+  (fails :macro '(&rest rest &body body))
+  (fails :macro '(&body body &rest rest))
+  (fails :defsetf '(&environment env foo)))
