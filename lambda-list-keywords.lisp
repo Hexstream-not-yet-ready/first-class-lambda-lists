@@ -71,35 +71,37 @@
         (check-type tail cons)
         (if (eq (first tail) introducer)
             (funcall parameters-parser (rest tail))
-            (values tail nil)))
+            tail))
       (lambda (tail)
         (check-type tail cons)
         (let ((first (first tail)))
           (if (not (%apparent-lambda-list-keyword-p first))
               (funcall parameters-parser tail)
-              (values tail nil))))))
+              tail)))))
 
 (defun %make-parameters-parser (lambda-list-keyword)
   (let ((arity (arity lambda-list-keyword))
         (parameter-parser (parameter-parser lambda-list-keyword)))
     (ecase arity
       (0 (lambda (tail)
-           (values tail
-                   (list (make-instance 'fcll:standard-lambda-list-section
-                                        :lambda-list-keyword lambda-list-keyword)))))
+           (%add-section (make-instance 'fcll:standard-lambda-list-section
+                                        :lambda-list-keyword lambda-list-keyword))
+           tail))
       (1 (lambda (tail)
            (if tail
-               (values (rest tail)
-                       (list (make-instance 'fcll:standard-lambda-list-section
-                                            :lambda-list-keyword lambda-list-keyword
-                                            :parameters (list (funcall parameter-parser (first tail))))))
+               (progn (%add-section
+                       (make-instance 'fcll:standard-lambda-list-section
+                                      :lambda-list-keyword lambda-list-keyword
+                                      :parameters (list (funcall parameter-parser (first tail)))))
+                      (rest tail))
                (error "Lambda list keyword ~S expected an argument." lambda-list-keyword))))
       ((t) (lambda (tail)
              (let* ((end (member-if #'%apparent-lambda-list-keyword-p tail))
                     (head (ldiff tail end)))
-               (values end (list (make-instance 'fcll:standard-lambda-list-section
-                                                :lambda-list-keyword lambda-list-keyword
-                                                :parameters (map-into head parameter-parser head))))))))))
+               (%add-section (make-instance 'fcll:standard-lambda-list-section
+                                            :lambda-list-keyword lambda-list-keyword
+                                            :parameters (map-into head parameter-parser head)))
+               end))))))
 
 (defun %make-lambda-list-keyword-parser (lambda-list-keyword)
   (%make-introducer-parser (introducer lambda-list-keyword)
@@ -115,10 +117,11 @@
               (allow-other-keys-p (when (eq (first end) '&allow-other-keys)
                                     (setf end (rest end))
                                     t)))
-         (values end (list (make-instance 'standard-&key-section
-                                          :lambda-list-keyword lambda-list-keyword
-                                          :parameters (map-into head parameter-parser head)
-                                          :allow-other-keys-p allow-other-keys-p))))))))
+         (%add-section (make-instance 'standard-&key-section
+                                      :lambda-list-keyword lambda-list-keyword
+                                      :parameters (map-into head parameter-parser head)
+                                      :allow-other-keys-p allow-other-keys-p))
+         end)))))
 
 (defmethod shared-initialize :after ((instance fcll:standard-lambda-list-keyword) slot-names &key)
   (unless (slot-boundp instance '%introducer)

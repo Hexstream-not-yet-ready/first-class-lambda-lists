@@ -12,6 +12,9 @@
            #:lambda-list-keyword-order
            #:standard-lambda-list-keyword-order
 
+           #:lambda-list-keyword-conflicts
+           #:standard-lambda-list-keyword-conflicts
+
            #:lambda-list-kind
            #:standard-lambda-list-kind
 
