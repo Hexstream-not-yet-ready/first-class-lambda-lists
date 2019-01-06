@@ -187,15 +187,17 @@
       (lambda (tail)
         (let ((*sections* nil))
           (multiple-value-bind (new-tail donep)
-              (let ((parser (funcall parser-maker)))
-                (if recursive-lambda-list-kind
-                    (let ((*parse-recursable-variable*
-                           (lambda (variable)
-                             (make-instance 'standard-lambda-list
-                                            :kind recursive-lambda-list-kind
-                                            :parse variable))))
-                      (funcall parser tail))
-                    (funcall parser tail)))
+              (let* ((parser (funcall parser-maker))
+                     (*parse-recursable-variable*
+                      (if recursive-lambda-list-kind
+                          (lambda (variable)
+                            (make-instance 'standard-lambda-list
+                                           :kind recursive-lambda-list-kind
+                                           :parse variable))
+                          (lambda (variable)
+                            (declare (ignore variable))
+                            (error "Tried to parse a recursable variable in a non-recursive context.")))))
+                (funcall parser tail))
             (let ((sections (nreverse *sections*)))
               (if new-tail
                   (error "Could not completely parse lambda list:~@

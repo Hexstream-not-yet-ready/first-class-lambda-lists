@@ -18,10 +18,7 @@
 (defclass parameter-recursable-variable-mixin (parameter-variable-mixin)
   ((%variable :type (or symbol fcll:lambda-list))))
 
-(defparameter *parse-recursable-variable*
-  (lambda (variable)
-    (declare (ignore variable))
-    (error "Tried to parse a recursable variable in a non-recursive context.")))
+(defvar *parse-recursable-variable*)
 
 (defparameter *default-initform* nil)
 
