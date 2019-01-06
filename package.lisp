@@ -4,6 +4,7 @@
   (:shadow #:variable)
   (:import-from #:definitions-systems #:define)
   (:import-from #:bubble-operator-upwards #:cartesian-product)
+  (:shadowing-import-from #:enhanced-eval-when #:eval-when)
   (:export #:lambda-list-keyword
            #:standard-lambda-list-keyword
            #:lambda-list-section

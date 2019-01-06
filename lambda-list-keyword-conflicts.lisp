@@ -1,5 +1,26 @@
 (in-package #:first-class-lambda-lists)
 
+(eval-when t
+
+  (defclass lambda-list-keyword-conflicts-definitions (defsys:standard-system)
+    ())
+
+  (defvar *lambda-list-keyword-conflicts-definitions*
+    (make-instance 'lambda-list-keyword-conflicts-definitions :name 'fcll:lambda-list-keyword-conflicts))
+
+  (setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-keyword-conflicts)
+        *lambda-list-keyword-conflicts-definitions*)
+
+  (defun %ensure-lambda-list-keyword-conflicts (name specification)
+    (setf (defsys:locate *lambda-list-keyword-conflicts-definitions* name)
+          (make-instance 'fcll:standard-lambda-list-keyword-conflicts
+                         :name name :specification specification)))
+
+  (defmethod defsys:expand-definition ((system lambda-list-keyword-conflicts-definitions) name environment args &key)
+    (destructuring-bind (specification) args
+      `(%ensure-lambda-list-keyword-conflicts ',name ',specification))))
+
+
 (defclass fcll:lambda-list-keyword-conflicts () ())
 
 (defclass fcll:standard-lambda-list-keyword-conflicts (fcll:lambda-list-keyword-conflicts defsys:name-mixin)

@@ -8,12 +8,12 @@
   :description "To be described."
 
   :depends-on ("definitions-systems"
-               "bubble-operator-upwards")
+               "bubble-operator-upwards"
+               "enhanced-eval-when")
 
   :version "0.1"
   :serial cl:t
   :components ((:file "package")
-               (:file "defsys")
                (:file "lambda-list-parameters")
                (:file "lambda-list-keywords")
                (:file "lambda-list-keyword-order")
