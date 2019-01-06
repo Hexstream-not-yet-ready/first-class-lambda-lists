@@ -131,6 +131,15 @@
                 (values tail (not (eq donep :stuck))))
               (values tail nil t)))))))
 
+(defparameter *root-lambda-list* nil)
+
+(define-condition fcll:lambda-list-keywords-conflict (fcll:malformed-lambda-list)
+  ((%keywords :initarg :lambda-list-keywords
+              :reader lambda-list-keywords))
+  (:report (lambda (condition stream)
+             (format stream "The following lambda list keywords conflict:~%~S"
+                     (lambda-list-keywords condition)))))
+
 (defun %make-keyword-processor-maker (lambda-list-keyword keyword-conflicts backtrackp)
   (let ((inner
          (let ((parser (parser lambda-list-keyword)))
@@ -163,7 +172,8 @@
                                                                *sections*
                                                                :key #'fcll:lambda-list-keyword)))
                                  (if conflicts
-                                     (error "The following lambda list keywords conflict:~%~S" conflicts)
+                                     (%malformed-lambda-list 'fcll:lambda-list-keywords-conflict
+                                                             :lambda-list-keywords conflicts)
                                      (funcall inner (cons introducer tail)))))))
                           inner)))
           (lambda ()
@@ -185,7 +195,13 @@
                 (%make-keyword-processor-maker spec keyword-conflicts backtrackp)))))
     (let ((parser-maker (recurse keyword-order)))
       (lambda (tail)
-        (let ((*sections* nil))
+        (let ((*sections* nil)
+              (*%malformed-lambda-list*
+               (lambda (error-type &rest args)
+                 (apply #'error error-type
+                        :root-lambda-list *root-lambda-list*
+                        :specification tail
+                        args))))
           (multiple-value-bind (new-tail donep)
               (let* ((parser (funcall parser-maker))
                      (*parse-recursable-variable*
@@ -200,9 +216,11 @@
                 (funcall parser tail))
             (let ((sections (nreverse *sections*)))
               (if new-tail
-                  (error "Could not completely parse lambda list:~@
-                          ~S~%new-tail: ~S~%donep: ~S~%sections: ~S"
-                         tail new-tail donep sections)
+                  (%malformed-lambda-list 'simple-malformed-lambda-list-error
+                                          :tail new-tail
+                                          :format-control "Could not completely parse lambda list.~@
+                                                           donep: ~S~%sections: ~S"
+                                          :format-arguments (list donep sections))
                   sections))))))))
 
 (defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key)

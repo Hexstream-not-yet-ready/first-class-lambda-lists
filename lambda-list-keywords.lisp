@@ -105,6 +105,22 @@
 (defun %add-section (section)
   (push section *sections*))
 
+(define-condition fcll:malformed-lambda-list (error)
+  ((%root-lambda-list :initarg :root-lambda-list
+                      :reader root-lambda-list)
+   (%specification :initarg :specification
+                   :reader specification)
+   (%tail :initarg :tail
+          :reader tail)))
+
+(define-condition simple-malformed-lambda-list-error (fcll:malformed-lambda-list simple-error)
+  ())
+
+(defvar *%malformed-lambda-list*)
+
+(defun %malformed-lambda-list (error-type &rest args)
+  (apply *%malformed-lambda-list* error-type args))
+
 (defun %make-parameters-parser (lambda-list-keyword)
   (let ((arity (arity lambda-list-keyword))
         (parameter-parser (parameter-parser lambda-list-keyword)))
@@ -120,7 +136,10 @@
                                       :lambda-list-keyword lambda-list-keyword
                                       :parameters (list (funcall parameter-parser (first tail)))))
                       (rest tail))
-               (error "Lambda list keyword ~S expected an argument." lambda-list-keyword))))
+               (%malformed-lambda-list 'simple-malformed-lambda-list-error
+                                       :tail tail
+                                       :format-control "Lambda list keyword ~S expected an argument."
+                                       :format-arguments (list lambda-list-keyword)))))
       ((t) (lambda (tail)
              (let* ((end (member-if #'%apparent-lambda-list-keyword-p tail))
                     (head (ldiff tail end)))

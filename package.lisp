@@ -1,7 +1,7 @@
 (cl:defpackage #:fcll
   (:nicknames #:first-class-lambda-lists)
   (:use #:cl)
-  (:shadow #:variable)
+  (:shadow #:variable #:lambda-list-keywords)
   (:import-from #:definitions-systems #:define)
   (:import-from #:bubble-operator-upwards #:cartesian-product)
   (:shadowing-import-from #:enhanced-eval-when #:eval-when)
@@ -22,4 +22,7 @@
            #:lambda-list
            #:standard-lambda-list
            #:parse
-           #:unparse))
+           #:unparse
+
+           #:malformed-lambda-list
+           #:lambda-list-keywords-conflict))

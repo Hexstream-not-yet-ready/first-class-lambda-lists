@@ -26,8 +26,6 @@
   (when parse-supplied-p
     (fcll:parse instance parse)))
 
-(defparameter *root-lambda-list* nil)
-
 (defun %call-with-root-lambda-list-setup (lambda-list function)
   (let* ((root-lambda-list (or *root-lambda-list* lambda-list))
          (*default-initform* (default-initform (kind root-lambda-list)))
