@@ -12,9 +12,9 @@
         *lambda-list-keyword-order-definitions*)
 
   (defun %ensure-lambda-list-keyword-order (name specification)
-    (setf (defsys:locate *lambda-list-keyword-order-definitions* name)
-          (make-instance 'fcll:standard-lambda-list-keyword-order
-                         :name name :specification specification)))
+    (%ensure-definition *lambda-list-keyword-order-definitions* name
+                        'fcll:standard-lambda-list-keyword-order
+                        :specification specification))
 
   (defmethod defsys:expand-definition ((system lambda-list-keyword-order-definitions) name environment args &key)
     (destructuring-bind (specification) args

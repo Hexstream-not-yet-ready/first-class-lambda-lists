@@ -12,9 +12,9 @@
         *lambda-list-keyword-conflicts-definitions*)
 
   (defun %ensure-lambda-list-keyword-conflicts (name specification)
-    (setf (defsys:locate *lambda-list-keyword-conflicts-definitions* name)
-          (make-instance 'fcll:standard-lambda-list-keyword-conflicts
-                         :name name :specification specification)))
+    (%ensure-definition *lambda-list-keyword-conflicts-definitions* name
+                        'fcll:standard-lambda-list-keyword-conflicts
+                        :specification specification))
 
   (defmethod defsys:expand-definition ((system lambda-list-keyword-conflicts-definitions) name environment args &key)
     (destructuring-bind (specification) args

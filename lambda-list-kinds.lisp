@@ -12,10 +12,9 @@
         *lambda-list-kind-definitions*)
 
   (defun %ensure-lambda-list-kind (name operator keywords &rest initargs)
-    (setf (defsys:locate *lambda-list-kind-definitions* name)
-          (apply #'make-instance 'fcll:standard-lambda-list-kind
-                 :name name :operator operator :keywords keywords
-                 initargs)))
+    (apply #'%ensure-definition *lambda-list-kind-definitions* name
+           'fcll:standard-lambda-list-kind
+           :operator operator :keywords keywords initargs))
 
   (defmethod defsys:expand-definition ((system lambda-list-kind-definitions) name environment args &key)
     (destructuring-bind (operator keywords &rest args) args

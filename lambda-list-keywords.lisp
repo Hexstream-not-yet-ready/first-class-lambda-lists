@@ -11,10 +11,18 @@
   (setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-keyword)
         *lambda-list-keyword-definitions*)
 
+  (defun %ensure-definition (definitions-system name definition-class &rest initargs)
+    (let ((existing (defsys:locate definitions-system name :errorp nil)))
+      (if existing
+          (apply #'reinitialize-instance existing initargs)
+          (setf (defsys:locate definitions-system name)
+                (apply #'make-instance definition-class
+                       :name name initargs)))))
+
   (defun %ensure-lambda-list-keyword (name arity &rest initargs)
-    (setf (defsys:locate *lambda-list-keyword-definitions* name)
-          (apply #'make-instance 'fcll:standard-lambda-list-keyword
-                 :name name :arity arity initargs)))
+    (apply #'%ensure-definition *lambda-list-keyword-definitions* name
+           'fcll:standard-lambda-list-keyword
+           :arity arity initargs))
 
   (defmethod defsys:expand-definition ((system lambda-list-keyword-definitions) name environment arity-then-args &key)
     (destructuring-bind (arity &rest args) arity-then-args
