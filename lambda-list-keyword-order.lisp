@@ -52,7 +52,7 @@
 (defun %lambda-list-keyword-order-specification-to-tree (specification)
   (%transform-keyword-order specification (lambda (spec)
                                             (check-type spec symbol)
-                                            (list (defsys:locate *lambda-list-keyword-definitions* spec)))))
+                                            (list (lambda-list-keyword spec)))))
 
 (defmethod shared-initialize :after ((instance fcll:standard-lambda-list-keyword-order) slot-names &key)
   (setf (slot-value instance '%tree)

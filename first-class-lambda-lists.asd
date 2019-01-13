@@ -16,6 +16,7 @@
   :components ((:file "package")
                (:file "lambda-list-parameters")
                (:file "lambda-list-keywords")
+               (:file "lambda-list-keywords-set")
                (:file "lambda-list-keyword-order")
                (:file "lambda-list-keyword-conflicts")
                (:file "lambda-list-kinds")

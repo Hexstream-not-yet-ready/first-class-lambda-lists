@@ -31,6 +31,14 @@
 
 (defclass fcll:lambda-list-keyword () ())
 
+(defgeneric fcll:lambda-list-keyword (object))
+
+(defmethod fcll:lambda-list-keyword ((lambda-list-keyword fcll:lambda-list-keyword))
+  lambda-list-keyword)
+
+(defmethod fcll:lambda-list-keyword ((name symbol))
+  (defsys:locate *lambda-list-keyword-definitions* name))
+
 (defmethod defsys:locate ((system lambda-list-keyword-definitions) (name fcll:lambda-list-keyword) &rest keys)
   (declare (ignore keys))
   name)
@@ -190,16 +198,6 @@
               (t (error "Must supply a parameter-parser for arity ~S." arity))))))
   (setf (slot-value instance '%parser)
         (funcall (%parser-maker instance) instance)))
-
-(defun %make-keyword-canonicalizer ()
-  (let ((defs *lambda-list-keyword-definitions*))
-    (lambda (designator)
-      (defsys:locate defs designator))))
-
-(defun %keyword= (a b)
-  (check-type a fcll:lambda-list-keyword)
-  (check-type b fcll:lambda-list-keyword)
-  (eq (defsys:name a) (defsys:name b)))
 
 
 (define (fcll:lambda-list-keyword &whole) 1)

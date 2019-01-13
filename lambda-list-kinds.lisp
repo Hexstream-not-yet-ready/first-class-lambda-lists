@@ -11,28 +11,44 @@
   (setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-kind)
         *lambda-list-kind-definitions*)
 
-  (defun %ensure-lambda-list-kind (name operator keywords &rest initargs)
+  (defun %ensure-lambda-list-kind (name operator keywords-set &rest initargs)
     (apply #'%ensure-definition *lambda-list-kind-definitions* name
            'fcll:standard-lambda-list-kind
-           :operator operator :keywords keywords initargs))
+           :operator operator :keywords-set keywords-set initargs))
+
+  (defun %derive-keywords-set (&key (from :ordinary) add remove replace)
+    (make-instance 'derived-lambda-list-keywords-set
+                   :keywords-set (and from (keywords-set (lambda-list-kind from)))
+                   :add add
+                   :remove remove
+                   :replace replace))
 
   (defmethod defsys:expand-definition ((system lambda-list-kind-definitions) name environment args &key)
     (destructuring-bind (operator keywords &rest args) args
       (let ((keywords-expansion
              (etypecase keywords
                ((cons (eql :derive) list)
-                `(%derive-keywords-list ,@(mapcan (let ((processp t))
-                                                    (lambda (key value)
-                                                      (prog1 (when processp
-                                                               (list key `',value))
-                                                        (setf processp (not processp)))))
-                                                  (cdr keywords)
-                                                  (cddr keywords))))
-               (list `',keywords))))
+                `(%derive-keywords-set ,@(mapcan (let ((processp t))
+                                                   (lambda (key value)
+                                                     (prog1 (when processp
+                                                              (list key `',value))
+                                                       (setf processp (not processp)))))
+                                                 (cdr keywords)
+                                                 (cddr keywords))))
+               (list
+                `(%derive-keywords-set :from nil :add ',keywords)))))
         `(%ensure-lambda-list-kind ',name ',operator ,keywords-expansion ,@args)))))
 
 
 (defclass fcll:lambda-list-kind () ())
+
+(defgeneric fcll:lambda-list-kind (object))
+
+(defmethod fcll:lambda-list-kind ((kind fcll:lambda-list-kind))
+  kind)
+
+(defmethod fcll:lambda-list-kind ((name symbol))
+  (defsys:locate *lambda-list-kind-definitions* name))
 
 (defmethod defsys:locate ((system lambda-list-kind-definitions) (name fcll:lambda-list-kind) &rest keys)
   (declare (ignore keys))
@@ -41,9 +57,9 @@
 (defclass fcll:standard-lambda-list-kind (fcll:lambda-list-kind defsys:name-mixin)
   ((%operator :initarg :operator
               :reader operator)
-   (%keywords :initarg :keywords
-              :reader keywords
-              :type list)
+   (%keywords-set :reader keywords-set
+                  :reader lambda-list-keywords-set
+                  :type lambda-list-keywords-set)
    (%keyword-order :reader keyword-order)
    (%keyword-conflicts :reader keyword-conflicts)
    (%recurse :initarg :recurse
@@ -55,19 +71,21 @@
                       :initform nil)
    (%parser :reader parser)))
 
-(defun %compute-keyword-order (keywords keyword-order)
-  (%transform-keyword-order keyword-order
-                            (lambda (keyword)
-                              (when (member (defsys:name keyword) keywords
-                                            :key #'defsys:name :test #'eq)
-                                (list keyword)))))
+(defun %compute-keyword-order (keywords-set keyword-order)
+  (let ((keywords (lambda-list-keywords keywords-set)))
+    (%transform-keyword-order keyword-order
+                              (lambda (keyword)
+                                (when (member (defsys:name keyword) keywords
+                                              :key #'defsys:name :test #'eq)
+                                  (list keyword))))))
 
-(defun %compute-keyword-conflicts (keywords keyword-conflicts)
-  (%transform-keyword-conflicts keyword-conflicts
-                                (lambda (keyword)
-                                  (when (member (defsys:name keyword) keywords
-                                                :key #'defsys:name :test #'eq)
-                                    (list keyword)))))
+(defun %compute-keyword-conflicts (keywords-set keyword-conflicts)
+  (let ((keywords (lambda-list-keywords keywords-set)))
+    (%transform-keyword-conflicts keyword-conflicts
+                                  (lambda (keyword)
+                                    (when (member (defsys:name keyword) keywords
+                                                  :key #'defsys:name :test #'eq)
+                                      (list keyword))))))
 
 (defun %make-list-processor-maker (recurse args)
   (let ((arg-processor-makers (mapcar recurse args)))
@@ -222,13 +240,15 @@
                                           :format-arguments (list donep sections))
                   sections))))))))
 
-(defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key)
-  (let* ((keywords (mapcar (%make-keyword-canonicalizer) (slot-value kind '%keywords)))
+(defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key keywords-set)
+  (check-type keywords-set lambda-list-keywords-set)
+  (let* ((keywords-set (make-instance 'subordinate-lambda-list-keywords-set
+                                      :owner kind :keywords-set keywords-set))
          (keyword-order (%compute-keyword-order
-                         keywords
+                         keywords-set
                          (tree (defsys:locate 'fcll:lambda-list-keyword-order :standard))))
          (keyword-conflicts (%compute-keyword-conflicts
-                             keywords
+                             keywords-set
                              (tree (defsys:locate 'fcll:lambda-list-keyword-conflicts :standard))))
          (recursive-lambda-list-kind
           (let ((recurse-kind (slot-value kind '%recurse)))
@@ -236,8 +256,8 @@
               (if (eq recurse-kind t)
                   kind
                   (defsys:locate *lambda-list-kind-definitions* recurse-kind))))))
-    (setf (slot-value kind '%keywords)
-          keywords
+    (setf (slot-value kind '%keywords-set)
+          keywords-set
           (slot-value kind '%keyword-order)
           keyword-order
           (slot-value kind '%keyword-conflicts)
@@ -246,33 +266,6 @@
           recursive-lambda-list-kind
           (slot-value kind '%parser)
           (%make-parser keyword-order keyword-conflicts recursive-lambda-list-kind))))
-
-(defun %derive-keywords-list (&key (from :ordinary) add remove replace)
-  (let ((canonicalize (%make-keyword-canonicalizer)))
-    (flet ((listify (object)
-             (if (listp object)
-                 object
-                 (list object))))
-      (multiple-value-bind (replace-add replace-remove)
-          (let ((add nil)
-                (remove nil))
-            (dolist (cons replace)
-              (push (funcall canonicalize (first cons)) remove)
-              (push (funcall canonicalize (second cons)) add))
-            (values (nreverse add) (nreverse remove)))
-        (let ((inherited (keywords (defsys:locate *lambda-list-kind-definitions* from)))
-              (add (nconc (mapcar canonicalize (listify add)) replace-add))
-              (remove (nconc (mapcar canonicalize (listify remove)) replace-remove)))
-          (let ((shared (intersection add remove :test #'%keyword=)))
-            (when shared
-              (error "Cannot both add and remove the same lambda list keywords: ~S" shared)))
-          (let ((overadd (intersection inherited add :test #'%keyword=)))
-            (when overadd
-              (warn "Tried to add already inherited lambda list keywords: ~S" overadd)))
-          (let ((overremove (set-difference remove inherited :test #'%keyword=)))
-            (when overremove
-              (warn "Tried to remove already not inherited lambda list keywords: ~S" overremove)))
-          (union (set-difference inherited remove :test #'%keyword=) add :test #'%keyword=))))))
 
 (define (fcll:lambda-list-kind :ordinary) defun
   (:required &optional &rest &key &aux)) ;&allow-other-keys is subordinate to &key, so implied by it.
