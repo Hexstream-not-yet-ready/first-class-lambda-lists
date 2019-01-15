@@ -21,6 +21,7 @@
 
 (defmethod shared-initialize :after ((instance fcll:standard-lambda-list) slot-names
                                      &key kind (parse nil parse-supplied-p))
+  (declare (ignore slot-names))
   (setf (slot-value instance '%kind)
         (defsys:locate *lambda-list-kind-definitions* kind))
   (when parse-supplied-p

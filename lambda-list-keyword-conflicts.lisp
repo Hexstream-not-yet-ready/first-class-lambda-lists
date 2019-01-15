@@ -17,6 +17,7 @@
                         :specification specification))
 
   (defmethod defsys:expand-definition ((system lambda-list-keyword-conflicts-definitions) name environment args &key)
+    (declare (ignore environment))
     (destructuring-bind (specification) args
       `(%ensure-lambda-list-keyword-conflicts ',name ',specification))))
 
@@ -57,6 +58,7 @@
                                                 (list (lambda-list-keyword spec)))))
 
 (defmethod shared-initialize :after ((instance fcll:standard-lambda-list-keyword-conflicts) slot-names &key)
+  (declare (ignore slot-names))
   (setf (slot-value instance '%tree)
         (%lambda-list-keyword-conflicts-specification-to-tree (specification instance))))
 

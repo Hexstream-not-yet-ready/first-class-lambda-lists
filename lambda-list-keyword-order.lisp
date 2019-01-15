@@ -17,6 +17,7 @@
                         :specification specification))
 
   (defmethod defsys:expand-definition ((system lambda-list-keyword-order-definitions) name environment args &key)
+    (declare (ignore environment))
     (destructuring-bind (specification) args
       `(%ensure-lambda-list-keyword-order ',name ',specification))))
 
@@ -55,6 +56,7 @@
                                             (list (lambda-list-keyword spec)))))
 
 (defmethod shared-initialize :after ((instance fcll:standard-lambda-list-keyword-order) slot-names &key)
+  (declare (ignore slot-names))
   (setf (slot-value instance '%tree)
         (%lambda-list-keyword-order-specification-to-tree (specification instance))))
 

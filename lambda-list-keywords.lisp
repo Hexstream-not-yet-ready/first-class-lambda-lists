@@ -25,6 +25,7 @@
            :arity arity initargs))
 
   (defmethod defsys:expand-definition ((system lambda-list-keyword-definitions) name environment arity-then-args &key)
+    (declare (ignore environment))
     (destructuring-bind (arity &rest args) arity-then-args
       `(%ensure-lambda-list-keyword ',name ,arity ,@args))))
 
@@ -185,6 +186,7 @@
          end)))))
 
 (defmethod shared-initialize :after ((instance fcll:standard-lambda-list-keyword) slot-names &key)
+  (declare (ignore slot-names))
   (unless (slot-boundp instance '%introducer)
     (setf (slot-value instance '%introducer) (defsys:name instance)))
   (unless (slot-boundp instance '%parameter-parser)
