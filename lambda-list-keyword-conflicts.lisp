@@ -27,10 +27,16 @@
 (defclass fcll:standard-lambda-list-keyword-conflicts (fcll:lambda-list-keyword-conflicts defsys:name-mixin)
   ((%specification :initarg :specification
                    :reader specification
-                   :type cons)
+                   :type list)
    (%tree :reader tree)))
 
-(defun %transform-keyword-conflicts (conflicts process-atom)
+(defgeneric %transform-keyword-conflicts (keyword-conflicts process-atom))
+
+(defmethod %transform-keyword-conflicts ((keyword-conflicts fcll:standard-lambda-list-keyword-conflicts) process-atom)
+  (make-instance 'fcll:standard-lambda-list-keyword-conflicts
+                 :specification (%transform-keyword-conflicts (tree keyword-conflicts) process-atom)))
+
+(defmethod %transform-keyword-conflicts (specification process-atom)
   (labels ((recurse (spec)
              (etypecase spec
                (cons (destructuring-bind (operator &rest args) spec
@@ -50,17 +56,15 @@
                                   args))
                            (t (list (cons operator args)))))))
                (atom (funcall process-atom spec)))))
-    (first (recurse conflicts))))
-
-(defun %lambda-list-keyword-conflicts-specification-to-tree (specification)
-  (%transform-keyword-conflicts specification (lambda (spec)
-                                                (check-type spec symbol)
-                                                (list (lambda-list-keyword spec)))))
+    (when specification
+      (first (recurse specification)))))
 
 (defmethod shared-initialize :after ((instance fcll:standard-lambda-list-keyword-conflicts) slot-names &key)
   (declare (ignore slot-names))
   (setf (slot-value instance '%tree)
-        (%lambda-list-keyword-conflicts-specification-to-tree (specification instance))))
+        (%transform-keyword-conflicts (specification instance)
+                                      (lambda (spec)
+                                        (list (lambda-list-keyword spec))))))
 
 (define (fcll:lambda-list-keyword-conflicts :standard)
   (and &rest &body))

@@ -62,8 +62,10 @@
                   :reader keywords-set
                   :reader lambda-list-keywords-set
                   :type lambda-list-keywords-set)
-   (%keyword-order :reader keyword-order)
-   (%keyword-conflicts :reader keyword-conflicts)
+   (%keyword-order :reader keyword-order
+                   :type fcll:lambda-list-keyword-order)
+   (%keyword-conflicts :reader keyword-conflicts
+                       :type fcll:lambda-list-keyword-conflicts)
    (%recurse :initarg :recurse ;Canonicalized in (shared-initialize :around).
              :reader recurse
              :type (or null fcll:lambda-list-kind)
@@ -160,7 +162,8 @@
                      (lambda-list-keywords condition)))))
 
 (defun %make-keyword-processor-maker (lambda-list-keyword keyword-conflicts backtrackp)
-  (let ((inner
+  (let ((keyword-conflicts (tree keyword-conflicts))
+        (inner
          (let ((parser (parser lambda-list-keyword)))
            (if backtrackp
                (lambda (tail)
@@ -212,7 +215,7 @@
                          (or (%make-or-processor-maker #'recurse args)))))
                (fcll:lambda-list-keyword
                 (%make-keyword-processor-maker spec keyword-conflicts backtrackp)))))
-    (let ((parser-maker (recurse keyword-order)))
+    (let ((parser-maker (recurse (tree keyword-order))))
       (lambda (tail)
         (let ((*sections* nil)
               (*%malformed-lambda-list*
@@ -268,10 +271,10 @@
   (let* ((keywords-set (keywords-set kind))
          (keyword-order (%compute-keyword-order
                          keywords-set
-                         (tree (defsys:locate 'fcll:lambda-list-keyword-order :standard))))
+                         (defsys:locate 'fcll:lambda-list-keyword-order :standard)))
          (keyword-conflicts (%compute-keyword-conflicts
                              keywords-set
-                             (tree (defsys:locate 'fcll:lambda-list-keyword-conflicts :standard))))
+                             (defsys:locate 'fcll:lambda-list-keyword-conflicts :standard)))
          (recursive-lambda-list-kind (recurse kind)))
     (setf (slot-value kind '%keywords-set)
           keywords-set

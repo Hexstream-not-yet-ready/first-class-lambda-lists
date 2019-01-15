@@ -28,9 +28,16 @@
   ((%specification :initarg :specification
                    :reader specification
                    :type cons)
-   (%tree :reader tree)))
+   (%tree :reader tree))
+  (:default-initargs :name nil))
 
-(defun %transform-keyword-order (keyword-order process-atom)
+(defgeneric %transform-keyword-order (keyword-order process-atom))
+
+(defmethod %transform-keyword-order ((keyword-order fcll:standard-lambda-list-keyword-order) process-atom)
+  (make-instance 'fcll:standard-lambda-list-keyword-order
+                 :specification (%transform-keyword-order (tree keyword-order) process-atom)))
+
+(defmethod %transform-keyword-order (specification process-atom)
   (labels ((recurse (spec)
              (etypecase spec
                (cons (destructuring-bind (operator &rest args) spec
@@ -48,17 +55,14 @@
                            (1 args)
                            (t (list (cons operator args)))))))
                (atom (funcall process-atom spec)))))
-    (first (recurse keyword-order))))
-
-(defun %lambda-list-keyword-order-specification-to-tree (specification)
-  (%transform-keyword-order specification (lambda (spec)
-                                            (check-type spec symbol)
-                                            (list (lambda-list-keyword spec)))))
+    (first (recurse specification))))
 
 (defmethod shared-initialize :after ((instance fcll:standard-lambda-list-keyword-order) slot-names &key)
   (declare (ignore slot-names))
   (setf (slot-value instance '%tree)
-        (%lambda-list-keyword-order-specification-to-tree (specification instance))))
+        (%transform-keyword-order (specification instance)
+                                  (lambda (spec)
+                                    (list (lambda-list-keyword spec))))))
 
 (define (fcll:lambda-list-keyword-order :standard)
   (list &whole
