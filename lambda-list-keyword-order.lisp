@@ -31,13 +31,7 @@
    (%tree :reader tree))
   (:default-initargs :name nil))
 
-(defgeneric %transform-keyword-order (keyword-order process-atom))
-
-(defmethod %transform-keyword-order ((keyword-order fcll:standard-lambda-list-keyword-order) process-atom)
-  (make-instance 'fcll:standard-lambda-list-keyword-order
-                 :specification (%transform-keyword-order (tree keyword-order) process-atom)))
-
-(defmethod %transform-keyword-order (specification process-atom)
+(defun %transform-keyword-order-specification (specification process-atom)
   (labels ((recurse (spec)
              (etypecase spec
                (cons (destructuring-bind (operator &rest args) spec
@@ -60,9 +54,30 @@
 (defmethod shared-initialize :after ((instance fcll:standard-lambda-list-keyword-order) slot-names &key)
   (declare (ignore slot-names))
   (setf (slot-value instance '%tree)
-        (%transform-keyword-order (specification instance)
-                                  (lambda (spec)
-                                    (list (lambda-list-keyword spec))))))
+        (%transform-keyword-order-specification (specification instance)
+                                                (lambda (spec)
+                                                  (list (lambda-list-keyword spec))))))
+
+(defclass scoped-lambda-list-keyword-order (fcll:lambda-list-keyword-order)
+  ((%keyword-order :initarg :keyword-order
+                   :reader keyword-order
+                   :type fcll:lambda-list-keyword-order
+                   :initform (error "Must supply a :keyword-order."))
+   (%keywords-set :initarg :keywords-set
+                  :reader keywords-set
+                  :type lambda-list-keywords-set
+                  :initform (error "Must supply a :keywords-set."))
+   (%tree :reader tree)))
+
+(defmethod shared-initialize :after ((instance scoped-lambda-list-keyword-order) slot-names &key)
+  (declare (ignore slot-names))
+  (setf (slot-value instance '%tree)
+        (let ((keywords (lambda-list-keywords (keywords-set instance))))
+          (%transform-keyword-order-specification (tree (keyword-order instance))
+                                                  (lambda (keyword)
+                                                    (when (member (defsys:name keyword) keywords
+                                                                  :key #'defsys:name :test #'eq)
+                                                      (list keyword)))))))
 
 (define (fcll:lambda-list-keyword-order :standard)
   (list &whole

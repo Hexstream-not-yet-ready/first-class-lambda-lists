@@ -30,13 +30,7 @@
                    :type list)
    (%tree :reader tree)))
 
-(defgeneric %transform-keyword-conflicts (keyword-conflicts process-atom))
-
-(defmethod %transform-keyword-conflicts ((keyword-conflicts fcll:standard-lambda-list-keyword-conflicts) process-atom)
-  (make-instance 'fcll:standard-lambda-list-keyword-conflicts
-                 :specification (%transform-keyword-conflicts (tree keyword-conflicts) process-atom)))
-
-(defmethod %transform-keyword-conflicts (specification process-atom)
+(defmethod %transform-keyword-conflicts-specification (specification process-atom)
   (labels ((recurse (spec)
              (etypecase spec
                (cons (destructuring-bind (operator &rest args) spec
@@ -62,9 +56,30 @@
 (defmethod shared-initialize :after ((instance fcll:standard-lambda-list-keyword-conflicts) slot-names &key)
   (declare (ignore slot-names))
   (setf (slot-value instance '%tree)
-        (%transform-keyword-conflicts (specification instance)
-                                      (lambda (spec)
-                                        (list (lambda-list-keyword spec))))))
+        (%transform-keyword-conflicts-specification (specification instance)
+                                                    (lambda (spec)
+                                                      (list (lambda-list-keyword spec))))))
+
+(defclass scoped-lambda-list-keyword-conflicts (fcll:lambda-list-keyword-conflicts)
+  ((%keyword-conflicts :initarg :keyword-conflicts
+                       :reader keyword-conflicts
+                       :type fcll:lambda-list-keyword-conflicts
+                       :initform (error "Must supply a :keyword-conflicts."))
+   (%keywords-set :initarg :keywords-set
+                  :reader keywords-set
+                  :type lambda-list-keywords-set
+                  :initform (error "Must supply a :keywords-set."))
+   (%tree :reader tree)))
+
+(defmethod shared-initialize :after ((instance scoped-lambda-list-keyword-conflicts) slot-names &key)
+  (declare (ignore slot-names))
+  (setf (slot-value instance '%tree)
+        (let ((keywords (lambda-list-keywords (keywords-set instance))))
+          (%transform-keyword-conflicts-specification (tree (keyword-conflicts instance))
+                                                      (lambda (keyword)
+                                                        (when (member (defsys:name keyword) keywords
+                                                                      :key #'defsys:name :test #'eq)
+                                                          (list keyword)))))))
 
 (define (fcll:lambda-list-keyword-conflicts :standard)
   (and &rest &body))

@@ -75,22 +75,6 @@
                       :initform nil)
    (%parser :reader parser)))
 
-(defun %compute-keyword-order (keywords-set keyword-order)
-  (let ((keywords (lambda-list-keywords keywords-set)))
-    (%transform-keyword-order keyword-order
-                              (lambda (keyword)
-                                (when (member (defsys:name keyword) keywords
-                                              :key #'defsys:name :test #'eq)
-                                  (list keyword))))))
-
-(defun %compute-keyword-conflicts (keywords-set keyword-conflicts)
-  (let ((keywords (lambda-list-keywords keywords-set)))
-    (%transform-keyword-conflicts keyword-conflicts
-                                  (lambda (keyword)
-                                    (when (member (defsys:name keyword) keywords
-                                                  :key #'defsys:name :test #'eq)
-                                      (list keyword))))))
-
 (defun %make-list-processor-maker (recurse args)
   (let ((arg-processor-makers (mapcar recurse args)))
     (lambda ()
@@ -269,12 +253,16 @@
 (defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key)
   (declare (ignore slot-names))
   (let* ((keywords-set (keywords-set kind))
-         (keyword-order (%compute-keyword-order
-                         keywords-set
-                         (defsys:locate 'fcll:lambda-list-keyword-order :standard)))
-         (keyword-conflicts (%compute-keyword-conflicts
-                             keywords-set
-                             (defsys:locate 'fcll:lambda-list-keyword-conflicts :standard)))
+         (keyword-order (make-instance
+                         'scoped-lambda-list-keyword-order
+                         :keyword-order (defsys:locate 'fcll:lambda-list-keyword-order
+                                                       :standard)
+                         :keywords-set keywords-set))
+         (keyword-conflicts (make-instance
+                             'scoped-lambda-list-keyword-conflicts
+                             :keyword-conflicts (defsys:locate 'fcll:lambda-list-keyword-conflicts
+                                                               :standard)
+                             :keywords-set keywords-set))
          (recursive-lambda-list-kind (recurse kind)))
     (setf (slot-value kind '%keywords-set)
           keywords-set
