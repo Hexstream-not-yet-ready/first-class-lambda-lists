@@ -9,12 +9,14 @@
 
   :depends-on ("definitions-systems"
                "bubble-operator-upwards"
-               "enhanced-eval-when")
+               "enhanced-eval-when"
+               "closer-mop")
 
   :version "0.1"
   :serial cl:t
   :components ((:file "package")
                (:file "lambda-list-parameters")
+               (:file "inherit")
                (:file "lambda-list-keywords")
                (:file "lambda-list-keywords-set")
                (:file "lambda-list-keyword-order")

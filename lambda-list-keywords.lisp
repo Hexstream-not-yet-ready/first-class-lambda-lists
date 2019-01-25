@@ -45,23 +45,41 @@
   name)
 
 (defclass fcll:standard-lambda-list-keyword (fcll:lambda-list-keyword defsys:name-mixin)
-  ((%arity :initarg :arity
-           :reader arity)
+  ((%parent :initarg :parent
+            :reader parent
+            :initform nil)
+   (%arity :initarg :arity
+           :reader arity
+           :inherit t)
    (%introducer :initarg :introducer
-                :reader introducer)
+                :reader introducer
+                :inherit t)
    (%parameter-parser :initarg :parameter-parser
                       :reader parameter-parser
-                      :type (or function symbol))
+                      :type (or function symbol)
+                      :inherit t)
    (%recursablep :initarg :recursablep
                  :reader recursablep
                  :type boolean
-                 :initform nil)
+                 :initform nil
+                 :inherit t)
    (%parser-maker :initarg :parser-maker
                   :reader %parser-maker
                   :type (or function symbol)
-                  :initform '%make-lambda-list-keyword-parser)
+                  :initform '%make-lambda-list-keyword-parser
+                  :inherit t)
    (%parser :reader parser
-            :type function)))
+            :type function))
+  (:metaclass standard-inheritable-slots-class))
+
+(defmethod slot-inherited-value-using-class ((class standard-inheritable-slots-class)
+                                             (object fcll:standard-lambda-list-keyword)
+                                             slot)
+  (let ((parent (parent object)))
+    (if parent
+        (values (slot-value parent (c2mop:slot-definition-name slot))
+                t)
+        (values nil nil))))
 
 (defclass fcll:lambda-list-section () ())
 
@@ -185,6 +203,12 @@
                                       :allow-other-keys-p allow-other-keys-p))
          end)))))
 
+(defmethod shared-initialize :around ((instance fcll:standard-lambda-list-keyword) slot-names &rest initargs &key parent &allow-other-keys)
+  (declare (ignore slot-names))
+  (if parent
+      (apply #'call-next-method instance slot-names :parent (lambda-list-keyword parent) initargs)
+      (call-next-method)))
+
 (defmethod shared-initialize :after ((instance fcll:standard-lambda-list-keyword) slot-names &key)
   (declare (ignore slot-names))
   (unless (slot-boundp instance '%introducer)
@@ -216,16 +240,15 @@
   :recursablep t)
 
 (define (fcll:lambda-list-keyword :required-specializable) t
-  :introducer nil
-  :parameter-parser #'%parse-specializable-parameter
-  :recursablep t)
+  :parent :required
+  :parameter-parser #'%parse-specializable-parameter)
 
 (define (fcll:lambda-list-keyword &optional) t
   :parameter-parser #'%parse-optional-parameter
   :recursablep t)
 
 (define (fcll:lambda-list-keyword :&optional-no-defaulting) t
-  :introducer '&optional
+  :parent '&optional
   :parameter-parser #'%parse-optional-no-defaulting-parameter)
 
 (define (fcll:lambda-list-keyword &rest) 1
@@ -240,7 +263,8 @@
   :parser-maker '%make-&key-parser)
 
 (define (fcll:lambda-list-keyword :&key-no-defaulting) t
-  :introducer '&key
+  :parent '&key
+  :parser-maker '%make-lambda-list-keyword-parser
   :parameter-parser #'%parse-key-no-defaulting-parameter)
 
 (define (fcll:lambda-list-keyword &allow-other-keys) 0)
