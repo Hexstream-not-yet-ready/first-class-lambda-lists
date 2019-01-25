@@ -204,7 +204,6 @@
          end)))))
 
 (defmethod shared-initialize :around ((instance fcll:standard-lambda-list-keyword) slot-names &rest initargs &key parent &allow-other-keys)
-  (declare (ignore slot-names))
   (if parent
       (apply #'call-next-method instance slot-names :parent (lambda-list-keyword parent) initargs)
       (call-next-method)))

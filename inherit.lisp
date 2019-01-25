@@ -28,6 +28,7 @@
   (find-class 'inheritable-effective-slot-definition))
 
 (defmethod c2mop:compute-effective-slot-definition ((class standard-inheritable-slots-class) name direct-slot-definitions)
+  (declare (ignore name))
   (let ((slot-definition (call-next-method)))
     (setf (slot-value slot-definition '%inherit)
           (let ((found (find-if (lambda (direct-slot-definition)

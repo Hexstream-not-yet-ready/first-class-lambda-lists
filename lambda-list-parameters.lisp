@@ -144,6 +144,7 @@
                   :type symbol)))
 
 (defmethod shared-initialize :after ((instance parameter-keyword-name-mixin) slot-names &key)
+  (declare (ignore slot-names))
   (unless (slot-boundp instance '%keyword-name)
     (setf (slot-value instance '%keyword-name)
           (%keywordize (variable instance)))))
