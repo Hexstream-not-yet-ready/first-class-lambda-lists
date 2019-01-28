@@ -11,14 +11,14 @@
   (setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-kind)
         *lambda-list-kind-definitions*)
 
-  (defun %ensure-lambda-list-kind (name operator keywords-set &rest initargs)
+  (defun %ensure-lambda-list-kind (name operator keywords-list &rest initargs)
     (apply #'%ensure-definition *lambda-list-kind-definitions* name
            'fcll:standard-lambda-list-kind
-           :operator operator :keywords-set keywords-set initargs))
+           :operator operator :keywords-list keywords-list initargs))
 
   (defun %derive-keywords-set (&key (from :ordinary) add remove replace)
     (make-instance 'derived-lambda-list-keywords-set
-                   :keywords-set (and from (keywords-set (lambda-list-kind from)))
+                   :keywords-set (and from (keywords-set (keywords-list (lambda-list-kind from))))
                    :add add
                    :remove remove
                    :replace replace))
@@ -38,7 +38,10 @@
                                                  (cddr keywords))))
                (list
                 `(%derive-keywords-set :from nil :add ',keywords)))))
-        `(%ensure-lambda-list-kind ',name ',operator ,keywords-expansion ,@args)))))
+        `(%ensure-lambda-list-kind ',name ',operator
+                                   (make-instance 'standard-lambda-list-keywords-list
+                                                  :keywords-set ,keywords-expansion)
+                                   ,@args)))))
 
 
 (defclass fcll:lambda-list-kind () ())
@@ -58,14 +61,10 @@
 (defclass fcll:standard-lambda-list-kind (fcll:lambda-list-kind defsys:name-mixin)
   ((%operator :initarg :operator
               :reader operator)
-   (%keywords-set :initarg :keywords-set ;Canonicalized in (shared-initialize :around).
-                  :reader keywords-set
-                  :reader lambda-list-keywords-set
-                  :type lambda-list-keywords-set)
-   (%keyword-order :reader keyword-order
-                   :type fcll:lambda-list-keyword-order)
-   (%keyword-conflicts :reader keyword-conflicts
-                       :type fcll:lambda-list-keyword-conflicts)
+   (%keywords-list :initarg :keywords-list
+                   :reader keywords-list
+                   :reader lambda-list-keywords-list
+                   :type lambda-list-keywords-list)
    (%recurse :initarg :recurse ;Canonicalized in (shared-initialize :around).
              :reader recurse
              :type (or null fcll:lambda-list-kind)
@@ -230,50 +229,24 @@
                   sections))))))))
 
 (defmethod shared-initialize :around ((kind fcll:standard-lambda-list-kind) slot-names
-                                      &rest initargs &key
-                                                       (keywords-set nil keywords-set-p)
-                                                       (recurse nil recurse-p))
+                                      &rest initargs &key (recurse nil recurse-p))
   (let ((canonicalized
-         (nconc (when keywords-set-p
-                  (list :keywords-set
-                        (let ((existing (and (slot-boundp kind '%keywords-set) (keywords-set kind))))
-                          (if existing
-                              (reinitialize-instance existing :keywords-set keywords-set)
-                              (make-instance 'subordinate-lambda-list-keywords-set
-                                             :owner kind :keywords-set keywords-set)))))
-                (when (and recurse-p
-                           (not (typep recurse '(or null fcll:lambda-list-kind))))
-                  (list :recurse (if (eq recurse t)
-                                     kind
-                                     (fcll:lambda-list-kind recurse)))))))
+         (when (and recurse-p
+                    (not (typep recurse '(or null fcll:lambda-list-kind))))
+           (list :recurse (if (eq recurse t)
+                              kind
+                              (fcll:lambda-list-kind recurse))))))
     (if canonicalized
         (apply #'call-next-method kind slot-names (nconc canonicalized initargs))
         (call-next-method))))
 
 (defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key)
   (declare (ignore slot-names))
-  (let* ((keywords-set (keywords-set kind))
-         (keyword-order (make-instance
-                         'scoped-lambda-list-keyword-order
-                         :keyword-order (defsys:locate 'fcll:lambda-list-keyword-order
-                                                       :standard)
-                         :keywords-set keywords-set))
-         (keyword-conflicts (make-instance
-                             'scoped-lambda-list-keyword-conflicts
-                             :keyword-conflicts (defsys:locate 'fcll:lambda-list-keyword-conflicts
-                                                               :standard)
-                             :keywords-set keywords-set))
-         (recursive-lambda-list-kind (recurse kind)))
-    (setf (slot-value kind '%keywords-set)
-          keywords-set
-          (slot-value kind '%keyword-order)
-          keyword-order
-          (slot-value kind '%keyword-conflicts)
-          keyword-conflicts
-          (slot-value kind '%recurse)
-          recursive-lambda-list-kind
-          (slot-value kind '%parser)
-          (%make-parser keyword-order keyword-conflicts recursive-lambda-list-kind))))
+  (setf (slot-value kind '%parser)
+        (let ((keywords-list (keywords-list kind)))
+          (%make-parser (keyword-order keywords-list)
+                        (keyword-conflicts keywords-list)
+                        (recurse kind)))))
 
 (define (fcll:lambda-list-kind :ordinary) defun
   (:required &optional &rest &key &aux)) ;&allow-other-keys is subordinate to &key, so implied by it.

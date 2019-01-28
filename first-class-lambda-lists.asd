@@ -21,6 +21,7 @@
                (:file "lambda-list-keywords-set")
                (:file "lambda-list-keyword-order")
                (:file "lambda-list-keyword-conflicts")
+               (:file "lambda-list-keywords-list")
                (:file "lambda-list-kinds")
                (:file "lambda-lists"))
 

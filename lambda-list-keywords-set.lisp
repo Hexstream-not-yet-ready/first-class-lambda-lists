@@ -77,19 +77,3 @@
       (when overremove
         (warn "Tried to remove already not inherited lambda list keywords: ~S" overremove)))
     (union (set-difference inherited remove :test #'eq) add :test #'eq)))
-
-(defclass subordinate-lambda-list-keywords-set (lambda-list-keywords-set)
-  ((%owner :initarg :owner
-           :reader owner
-           :initform nil)
-   (%keywords-set :initarg :keywords-set
-                  :reader keywords-set
-                  :type lambda-list-keywords-set
-                  :initform (error "Must supply :keywords-set argument."))))
-
-(defmethod print-object ((keywords-set subordinate-lambda-list-keywords-set) stream)
-  (print-unreadable-object (keywords-set stream :type t)
-    (format stream "~S ~S" (owner keywords-set) (lambda-list-keywords keywords-set))))
-
-(defmethod lambda-list-keywords ((keywords-set subordinate-lambda-list-keywords-set))
-  (lambda-list-keywords (keywords-set keywords-set)))
