@@ -67,7 +67,7 @@
                        :initform (error "Must supply a :keyword-conflicts."))
    (%keywords-set :initarg :keywords-set
                   :reader keywords-set
-                  :type lambda-list-keywords-set
+                  :type fcll:lambda-list-keywords-set
                   :initform (error "Must supply a :keywords-set."))
    (%tree :reader tree)))
 

@@ -1,22 +1,22 @@
 (in-package #:first-class-lambda-lists)
 
-(defclass lambda-list-keywords-set () ())
+(defclass fcll:lambda-list-keywords-set () ())
 
-(defgeneric lambda-list-keywords-set (object))
+(defgeneric fcll:lambda-list-keywords-set (object))
 
-(defmethod lambda-list-keywords-set ((keywords-set lambda-list-keywords-set))
+(defmethod fcll:lambda-list-keywords-set ((keywords-set fcll:lambda-list-keywords-set))
   keywords-set)
 
-(defmethod print-object ((keywords-set lambda-list-keywords-set) stream)
+(defmethod print-object ((keywords-set fcll:lambda-list-keywords-set) stream)
   (print-unreadable-object (keywords-set stream :type t)
     (prin1 (lambda-list-keywords keywords-set) stream)))
 
 (defgeneric lambda-list-keywords (keywords-set))
 
-(defclass derived-lambda-list-keywords-set (lambda-list-keywords-set)
+(defclass fcll:derived-lambda-list-keywords-set (lambda-list-keywords-set)
   ((%keywords-set :initarg :keywords-set
                   :reader keywords-set
-                  :type (or null lambda-list-keywords-set)
+                  :type (or null fcll:lambda-list-keywords-set)
                   :initform nil)
    (%add :initarg :add
          :reader add
@@ -33,7 +33,7 @@
    (%lambda-list-keywords :reader lambda-list-keywords
                           :type list)))
 
-(defmethod shared-initialize :around ((keywords-set derived-lambda-list-keywords-set) slot-names &rest initargs
+(defmethod shared-initialize :around ((keywords-set fcll:derived-lambda-list-keywords-set) slot-names &rest initargs
                                       &key (add nil addp) (remove nil removep) (replace nil replacep))
   (let ((canonicalized
          (flet ((listify (object)
@@ -55,7 +55,7 @@
                (nconc canonicalized initargs))
         (call-next-method))))
 
-(defmethod shared-initialize :after ((keywords-set derived-lambda-list-keywords-set) slot-names &key)
+(defmethod shared-initialize :after ((keywords-set fcll:derived-lambda-list-keywords-set) slot-names &key)
   (declare (ignore slot-names))
   (setf (slot-value keywords-set '%lambda-list-keywords)
         (%compute-lambda-list-keywords (keywords-set keywords-set)

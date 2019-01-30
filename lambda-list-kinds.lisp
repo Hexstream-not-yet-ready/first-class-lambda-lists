@@ -17,7 +17,7 @@
            :operator operator :keywords-list keywords-list initargs))
 
   (defun %derive-keywords-set (&key (from :ordinary) add remove replace)
-    (make-instance 'derived-lambda-list-keywords-set
+    (make-instance 'fcll:derived-lambda-list-keywords-set
                    :keywords-set (and from (keywords-set (keywords-list (lambda-list-kind from))))
                    :add add
                    :remove remove
@@ -39,8 +39,10 @@
                (list
                 `(%derive-keywords-set :from nil :add ',keywords)))))
         `(%ensure-lambda-list-kind ',name ',operator
-                                   (make-instance 'standard-lambda-list-keywords-list
-                                                  :keywords-set ,keywords-expansion)
+                                   (make-instance 'standard-coherent-lambda-list-keywords-list
+                                                  :keywords-list
+                                                  (make-instance 'standard-raw-lambda-list-keywords-list
+                                                                 :keywords-set ,keywords-expansion))
                                    ,@args)))))
 
 

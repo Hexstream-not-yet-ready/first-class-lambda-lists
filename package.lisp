@@ -10,6 +10,9 @@
            #:lambda-list-section
            #:standard-lambda-list-section
 
+           #:lambda-list-keywords-set
+           #:derived-lambda-list-keywords-set
+
            #:lambda-list-keyword-order
            #:standard-lambda-list-keyword-order
 
