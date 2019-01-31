@@ -190,45 +190,39 @@
 
 ;;; ↑ WORST. CODE. EVER! ↓
 
-(defun %make-parser (keyword-order keyword-conflicts recursive-lambda-list-kind)
-  (labels ((recurse (spec &optional backtrackp)
-             (etypecase spec
-               (cons (destructuring-bind (operator &rest args) spec
-                       (check-type args cons)
-                       (ecase operator
-                         (list (%make-list-processor-maker #'recurse args))
-                         (or (%make-or-processor-maker #'recurse args)))))
-               (fcll:lambda-list-keyword
-                (%make-keyword-processor-maker spec keyword-conflicts backtrackp)))))
-    (let ((parser-maker (recurse (tree keyword-order))))
-      (lambda (tail)
-        (let ((*sections* nil)
-              (*%malformed-lambda-list*
-               (lambda (error-type &rest args)
-                 (apply #'error error-type
-                        :root-lambda-list *root-lambda-list*
-                        :specification tail
-                        args))))
-          (multiple-value-bind (new-tail donep)
-              (let* ((parser (funcall parser-maker))
-                     (*parse-recursable-variable*
-                      (if recursive-lambda-list-kind
-                          (lambda (variable)
-                            (make-instance 'standard-lambda-list
-                                           :kind recursive-lambda-list-kind
-                                           :parse variable))
-                          (lambda (variable)
-                            (declare (ignore variable))
-                            (error "Tried to parse a recursable variable in a non-recursive context.")))))
-                (funcall parser tail))
-            (let ((sections (nreverse *sections*)))
-              (if new-tail
-                  (%malformed-lambda-list 'simple-malformed-lambda-list-error
-                                          :tail new-tail
-                                          :format-control "Could not completely parse lambda list.~@
+(defun %make-parser (keywords-list parse-recursable-variable)
+  (let ((keyword-conflicts (keyword-conflicts keywords-list)))
+    (labels ((recurse (spec &optional backtrackp)
+               (etypecase spec
+                 (cons (destructuring-bind (operator &rest args) spec
+                         (check-type args cons)
+                         (ecase operator
+                           (list (%make-list-processor-maker #'recurse args))
+                           (or (%make-or-processor-maker #'recurse args)))))
+                 (fcll:lambda-list-keyword
+                  (%make-keyword-processor-maker spec keyword-conflicts backtrackp)))))
+      (let ((parser-maker (recurse (tree (keyword-order keywords-list)))))
+        (lambda (tail)
+          (let ((*sections* nil)
+                (*%malformed-lambda-list*
+                 (lambda (error-type &rest args)
+                   (apply #'error error-type
+                          :root-lambda-list *root-lambda-list*
+                          :specification tail
+                          args))))
+            (multiple-value-bind (new-tail donep)
+                (let* ((parser (funcall parser-maker))
+                       (*parse-recursable-variable*
+                        parse-recursable-variable))
+                  (funcall parser tail))
+              (let ((sections (nreverse *sections*)))
+                (if new-tail
+                    (%malformed-lambda-list 'simple-malformed-lambda-list-error
+                                            :tail new-tail
+                                            :format-control "Could not completely parse lambda list.~@
                                                            donep: ~S~%sections: ~S"
-                                          :format-arguments (list donep sections))
-                  sections))))))))
+                                            :format-arguments (list donep sections))
+                    sections)))))))))
 
 (defmethod shared-initialize :around ((kind fcll:standard-lambda-list-kind) slot-names
                                       &rest initargs &key (recurse nil recurse-p))
@@ -246,9 +240,16 @@
   (declare (ignore slot-names))
   (setf (slot-value kind '%parser)
         (let ((keywords-list (keywords-list kind)))
-          (%make-parser (keyword-order keywords-list)
-                        (keyword-conflicts keywords-list)
-                        (recurse kind)))))
+          (%make-parser keywords-list
+                        (let ((recursive-lambda-list-kind (recurse kind)))
+                          (if recursive-lambda-list-kind
+                              (lambda (variable)
+                                (make-instance 'standard-lambda-list
+                                               :kind recursive-lambda-list-kind
+                                               :parse variable))
+                              (lambda (variable)
+                                (declare (ignore variable))
+                                (error "Tried to parse a recursable variable in a non-recursive context."))))))))
 
 (define (fcll:lambda-list-kind :ordinary) defun
   (:required &optional &rest &key &aux)) ;&allow-other-keys is subordinate to &key, so implied by it.
