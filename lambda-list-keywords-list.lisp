@@ -6,25 +6,25 @@
 (defclass raw-lambda-list-keywords-list (lambda-list-keywords-list)
   ())
 
-(defclass keywords-set-mixin ()
+(defclass kl-keywords-set-mixin ()
   ((%keywords-set :reader keywords-set
                   :reader fcll:lambda-list-keywords-set
                   :type fcll:lambda-list-keywords-set)))
 
-(defclass keyword-order-mixin ()
+(defclass kl-keyword-order-mixin ()
   ((%keyword-order :reader keyword-order
                    :reader fcll:lambda-list-keyword-order
                    :type fcll:lambda-list-keyword-order)))
 
-(defclass keyword-conflicts-mixin ()
+(defclass kl-keyword-conflicts-mixin ()
   ((%keyword-conflicts :reader keyword-conflicts
                        :reader fcll:lambda-list-keyword-conflicts
                        :type fcll:lambda-list-keyword-conflicts)))
 
 (defclass standard-raw-lambda-list-keywords-list (raw-lambda-list-keywords-list
-                                                  keywords-set-mixin
-                                                  keyword-order-mixin
-                                                  keyword-conflicts-mixin)
+                                                  kl-keywords-set-mixin
+                                                  kl-keyword-order-mixin
+                                                  kl-keyword-conflicts-mixin)
   ((%keywords-set :initarg :keywords-set)
    (%keyword-order :initarg :keyword-order
                    :initform (defsys:locate 'fcll:lambda-list-keyword-order
@@ -40,9 +40,9 @@
 
 
 (defclass standard-coherent-lambda-list-keywords-list (coherent-lambda-list-keywords-list
-                                                       keywords-set-mixin
-                                                       keyword-order-mixin
-                                                       keyword-conflicts-mixin)
+                                                       kl-keywords-set-mixin
+                                                       kl-keyword-order-mixin
+                                                       kl-keyword-conflicts-mixin)
   ((%keywords-list :initarg :keywords-list
                    :reader keywords-list
                    :type lambda-list-keywords-list

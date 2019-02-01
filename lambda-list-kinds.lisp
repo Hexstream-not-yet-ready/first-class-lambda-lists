@@ -212,15 +212,14 @@
                           args))))
             (multiple-value-bind (new-tail donep)
                 (let* ((parser (funcall parser-maker))
-                       (*parse-recursable-variable*
-                        parse-recursable-variable))
+                       (*parse-recursable-variable* parse-recursable-variable))
                   (funcall parser tail))
               (let ((sections (nreverse *sections*)))
                 (if new-tail
                     (%malformed-lambda-list 'simple-malformed-lambda-list-error
                                             :tail new-tail
                                             :format-control "Could not completely parse lambda list.~@
-                                                           donep: ~S~%sections: ~S"
+                                                             donep: ~S~%sections: ~S"
                                             :format-arguments (list donep sections))
                     sections)))))))))
 

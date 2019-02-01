@@ -22,14 +22,14 @@
       `(%ensure-lambda-list-keyword-order ',name ',specification))))
 
 
-(defclass fcll:lambda-list-keyword-order () ())
+(defclass tree-mixin ()
+  ((%tree :reader tree)))
 
-(defclass fcll:standard-lambda-list-keyword-order (fcll:lambda-list-keyword-order defsys:name-mixin)
-  ((%specification :initarg :specification
-                   :reader specification
-                   :type cons)
-   (%tree :reader tree))
-  (:default-initargs :name nil))
+(defgeneric %compute-tree (object))
+
+(defmethod shared-initialize :after ((instance tree-mixin) slot-names &key &allow-other-keys)
+  (declare (ignore slot-names))
+  (setf (slot-value instance '%tree) (%compute-tree instance)))
 
 (defun %transform-keyword-order-specification (specification process-atom)
   (labels ((recurse (spec)
@@ -51,33 +51,57 @@
                (atom (funcall process-atom spec)))))
     (first (recurse specification))))
 
-(defmethod shared-initialize :after ((instance fcll:standard-lambda-list-keyword-order) slot-names &key)
-  (declare (ignore slot-names))
-  (setf (slot-value instance '%tree)
-        (%transform-keyword-order-specification (specification instance)
-                                                (lambda (spec)
-                                                  (list (lambda-list-keyword spec))))))
-
-(defclass scoped-lambda-list-keyword-order (fcll:lambda-list-keyword-order)
+(defclass keyword-order-mixin ()
   ((%keyword-order :initarg :keyword-order
                    :reader keyword-order
                    :type fcll:lambda-list-keyword-order
-                   :initform (error "Must supply a :keyword-order."))
-   (%keywords-set :initarg :keywords-set
+                   :initform (error "Must supply a :keyword-order."))))
+
+(defclass keywords-set-mixin ()
+  ((%keywords-set :initarg :keywords-set
                   :reader keywords-set
                   :type fcll:lambda-list-keywords-set
-                  :initform (error "Must supply a :keywords-set."))
-   (%tree :reader tree)))
+                  :initform (error "Must supply a :keywords-set."))))
 
-(defmethod shared-initialize :after ((instance scoped-lambda-list-keyword-order) slot-names &key)
-  (declare (ignore slot-names))
-  (setf (slot-value instance '%tree)
-        (let ((keywords (lambda-list-keywords (keywords-set instance))))
-          (%transform-keyword-order-specification (tree (keyword-order instance))
-                                                  (lambda (keyword)
-                                                    (when (member (defsys:name keyword) keywords
-                                                                  :key #'defsys:name :test #'eq)
-                                                      (list keyword)))))))
+
+(defclass fcll:lambda-list-keyword-order () ())
+
+(defclass fcll:standard-lambda-list-keyword-order (fcll:lambda-list-keyword-order tree-mixin defsys:name-mixin)
+  ((%specification :initarg :specification
+                   :reader specification
+                   :type cons))
+  (:default-initargs :name nil))
+
+(defmethod %compute-tree ((instance fcll:standard-lambda-list-keyword-order))
+  (%transform-keyword-order-specification (specification instance)
+                                          (lambda (spec)
+                                            (list (lambda-list-keyword spec)))))
+
+(defclass scoped-lambda-list-keyword-order (fcll:lambda-list-keyword-order keyword-order-mixin keywords-set-mixin tree-mixin)
+  ())
+
+(defmethod %compute-tree ((instance scoped-lambda-list-keyword-order))
+  (let ((keywords (lambda-list-keywords (keywords-set instance))))
+    (%transform-keyword-order-specification (tree (keyword-order instance))
+                                            (lambda (keyword)
+                                              (when (member (defsys:name keyword) keywords
+                                                            :key #'defsys:name :test #'eq)
+                                                (list keyword))))))
+
+(defclass mapper-mixin ()
+  ((%mapper :initarg :mapper
+            :reader mapper
+            :type (or function symbol)
+            :initform (error "Must supply a :mapper."))))
+
+(defclass mapped-lambda-list-keyword-order (fcll:lambda-list-keyword-order keyword-order-mixin mapper-mixin tree-mixin)
+  ())
+
+(defmethod %compute-tree ((instance mapped-lambda-list-keyword-order))
+  (%transform-keyword-order-specification (tree (keyword-order instance))
+                                          (let ((mapper (mapper instance)))
+                                            (lambda (keyword)
+                                              (list (funcall mapper keyword))))))
 
 (define (fcll:lambda-list-keyword-order :standard)
   (list &whole
