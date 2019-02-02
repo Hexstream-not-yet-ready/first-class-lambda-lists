@@ -13,7 +13,18 @@
 
 (defgeneric lambda-list-keywords (keywords-set))
 
-(defclass fcll:derived-lambda-list-keywords-set (lambda-list-keywords-set)
+(defclass lambda-list-keywords-mixin ()
+  ((%lambda-list-keywords :reader lambda-list-keywords
+                          :type list)))
+
+(defgeneric %compute-lambda-list-keywords (object))
+
+(defmethod shared-initialize :after ((instance lambda-list-keywords-mixin) slot-names &key)
+  (declare (ignore slot-names))
+  (setf (slot-value instance '%lambda-list-keywords)
+        (%compute-lambda-list-keywords instance)))
+
+(defclass fcll:derived-lambda-list-keywords-set (lambda-list-keywords-set lambda-list-keywords-mixin)
   ((%keywords-set :initarg :keywords-set
                   :reader keywords-set
                   :type (or null fcll:lambda-list-keywords-set)
@@ -29,9 +40,7 @@
    (%replace :initarg :replace
              :reader replace
              :type list
-             :initform nil)
-   (%lambda-list-keywords :reader lambda-list-keywords
-                          :type list)))
+             :initform nil)))
 
 (defmethod shared-initialize :around ((keywords-set fcll:derived-lambda-list-keywords-set) slot-names &rest initargs
                                       &key (add nil addp) (remove nil removep) (replace nil replacep))
@@ -55,25 +64,20 @@
                (nconc canonicalized initargs))
         (call-next-method))))
 
-(defmethod shared-initialize :after ((keywords-set fcll:derived-lambda-list-keywords-set) slot-names &key)
-  (declare (ignore slot-names))
-  (setf (slot-value keywords-set '%lambda-list-keywords)
-        (%compute-lambda-list-keywords (keywords-set keywords-set)
-                                       (add keywords-set)
-                                       (remove keywords-set)
-                                       (replace keywords-set))))
-
-(defun %compute-lambda-list-keywords (base add remove replace)
-  (let ((inherited (and base (lambda-list-keywords base)))
-        (add (append add (mapcar #'second replace)))
-        (remove (append remove (mapcar #'first replace))))
-    (let ((shared (intersection add remove :test #'eq)))
-      (when shared
-        (error "Cannot both add and remove the same lambda list keywords: ~S" shared)))
-    (let ((overadd (intersection inherited add :test #'eq)))
-      (when overadd
-        (warn "Tried to add already inherited lambda list keywords: ~S" overadd)))
-    (let ((overremove (set-difference remove inherited :test #'eq)))
-      (when overremove
-        (warn "Tried to remove already not inherited lambda list keywords: ~S" overremove)))
-    (union (set-difference inherited remove :test #'eq) add :test #'eq)))
+(defmethod %compute-lambda-list-keywords ((keywords-set fcll:derived-lambda-list-keywords-set))
+  (let ((inherited (let ((base (keywords-set keywords-set)))
+                     (and base (lambda-list-keywords base)))))
+    (multiple-value-bind (add remove)
+        (let ((replace (replace keywords-set)))
+          (values (append (add keywords-set) (mapcar #'second replace))
+                  (append (remove keywords-set) (mapcar #'first replace))))
+      (let ((shared (intersection add remove :test #'eq)))
+        (when shared
+          (error "Cannot both add and remove the same lambda list keywords: ~S" shared)))
+      (let ((overadd (intersection inherited add :test #'eq)))
+        (when overadd
+          (warn "Tried to add already inherited lambda list keywords: ~S" overadd)))
+      (let ((overremove (set-difference remove inherited :test #'eq)))
+        (when overremove
+          (warn "Tried to remove already not inherited lambda list keywords: ~S" overremove)))
+      (union (set-difference inherited remove :test #'eq) add :test #'eq))))

@@ -37,8 +37,6 @@
 (defclass coherent-lambda-list-keywords-list (lambda-list-keywords-list)
   ())
 
-
-
 (defclass standard-coherent-lambda-list-keywords-list (coherent-lambda-list-keywords-list
                                                        lambda-list-keywords-list-slots-mixin
                                                        keywords-list-mixin)
