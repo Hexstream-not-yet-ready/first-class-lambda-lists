@@ -24,7 +24,7 @@
   (setf (slot-value instance '%lambda-list-keywords)
         (%compute-lambda-list-keywords instance)))
 
-(defclass fcll:derived-lambda-list-keywords-set (lambda-list-keywords-set lambda-list-keywords-mixin)
+(defclass fcll:derived-lambda-list-keywords-set (fcll:lambda-list-keywords-set lambda-list-keywords-mixin)
   ((%keywords-set :initarg :keywords-set
                   :reader keywords-set
                   :type (or null fcll:lambda-list-keywords-set)
@@ -81,3 +81,31 @@
         (when overremove
           (warn "Tried to remove already not inherited lambda list keywords: ~S" overremove)))
       (union (set-difference inherited remove :test #'eq) add :test #'eq))))
+
+(defclass keywords-set-mixin ()
+  ((%keywords-set :initarg :keywords-set
+                  :reader keywords-set
+                  :type fcll:lambda-list-keywords-set
+                  :initform (error "Must supply a :keywords-set."))))
+
+(defclass mapper-mixin ()
+  ((%mapper :initarg :mapper
+            :reader mapper
+            :type (or function symbol)
+            :initform (error "Must supply a :mapper."))
+   (%mappings :reader mappings
+              :type list)))
+
+(defclass mapped-lambda-list-keywords-set (fcll:lambda-list-keywords-set keywords-set-mixin mapper-mixin lambda-list-keywords-mixin)
+  ())
+
+(defmethod %compute-lambda-list-keywords ((keywords-set mapped-lambda-list-keywords-set))
+  (mapcar (mapper keywords-set)
+          (lambda-list-keywords (keywords-set keywords-set))))
+
+(defmethod shared-initialize :after ((keywords-set mapped-lambda-list-keywords-set) slot-names &key)
+  (declare (ignore slot-names))
+  (setf (slot-value keywords-set '%mappings)
+        (mapcar #'cons
+                (lambda-list-keywords (keywords-set keywords-set))
+                (lambda-list-keywords keywords-set))))

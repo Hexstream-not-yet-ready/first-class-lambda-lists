@@ -57,12 +57,6 @@
                    :type fcll:lambda-list-keyword-order
                    :initform (error "Must supply a :keyword-order."))))
 
-(defclass keywords-set-mixin ()
-  ((%keywords-set :initarg :keywords-set
-                  :reader keywords-set
-                  :type fcll:lambda-list-keywords-set
-                  :initform (error "Must supply a :keywords-set."))))
-
 
 (defclass fcll:lambda-list-keyword-order () ())
 
@@ -87,12 +81,6 @@
                                               (when (member (defsys:name keyword) keywords
                                                             :key #'defsys:name :test #'eq)
                                                 (list keyword))))))
-
-(defclass mapper-mixin ()
-  ((%mapper :initarg :mapper
-            :reader mapper
-            :type (or function symbol)
-            :initform (error "Must supply a :mapper."))))
 
 (defclass mapped-lambda-list-keyword-order (fcll:lambda-list-keyword-order keyword-order-mixin mapper-mixin tree-mixin)
   ())

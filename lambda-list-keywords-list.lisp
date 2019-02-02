@@ -58,3 +58,34 @@
             (make-instance 'scoped-lambda-list-keyword-conflicts
                            :keyword-conflicts (keyword-conflicts keywords-list)
                            :keywords-set keywords-set)))))
+
+(defclass mapped-lambda-list-keywords-list (coherent-lambda-list-keywords-list
+                                            lambda-list-keywords-list-slots-mixin
+                                            keywords-list-mixin
+                                            mapper-mixin)
+  ((%keywords-list :type coherent-lambda-list-keywords-list)))
+
+(defmethod shared-initialize :after ((instance mapped-lambda-list-keywords-list) slot-names
+                                     &key (keywords-list nil keywords-list-p))
+  (declare (ignore slot-names))
+  (when keywords-list-p
+    (check-type keywords-list coherent-lambda-list-keywords-list)
+    (let* ((keywords-set (keywords-set keywords-list))
+           (mapped-lambda-list-keywords-set
+            (make-instance 'mapped-lambda-list-keywords-set
+                           :keywords-set keywords-set
+                           :mapper (mapper instance)))
+           (mapper (let ((mappings (mappings mapped-lambda-list-keywords-set)))
+                     (lambda (lambda-list-keyword)
+                       (or (cdr (assoc lambda-list-keyword mappings :test #'eq))
+                           (error "Mapping error."))))))
+      (setf (slot-value instance '%keywords-set)
+            mapped-lambda-list-keywords-set
+            (slot-value instance '%keyword-order)
+            (make-instance 'mapped-lambda-list-keyword-order
+                           :keyword-order (keyword-order keywords-list)
+                           :mapper mapper)
+            (slot-value instance '%keyword-conflicts)
+            (make-instance 'mapped-lambda-list-keyword-conflicts
+                           :keyword-conflicts (keyword-conflicts keywords-list)
+                           :mapper mapper)))))
