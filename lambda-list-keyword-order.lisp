@@ -103,6 +103,7 @@
                                             (lambda (keyword)
                                               (list (funcall mapper keyword))))))
 
+
 (define (fcll:lambda-list-keyword-order :standard)
   (list &whole
         (or (list (or :required :required-specializable)

@@ -6,25 +6,25 @@
 (defclass raw-lambda-list-keywords-list (lambda-list-keywords-list)
   ())
 
-(defclass kl-keywords-set-mixin ()
+(defclass lambda-list-keywords-list-slots-mixin ()
   ((%keywords-set :reader keywords-set
                   :reader fcll:lambda-list-keywords-set
-                  :type fcll:lambda-list-keywords-set)))
-
-(defclass kl-keyword-order-mixin ()
-  ((%keyword-order :reader keyword-order
+                  :type fcll:lambda-list-keywords-set)
+   (%keyword-order :reader keyword-order
                    :reader fcll:lambda-list-keyword-order
-                   :type fcll:lambda-list-keyword-order)))
-
-(defclass kl-keyword-conflicts-mixin ()
-  ((%keyword-conflicts :reader keyword-conflicts
+                   :type fcll:lambda-list-keyword-order)
+   (%keyword-conflicts :reader keyword-conflicts
                        :reader fcll:lambda-list-keyword-conflicts
                        :type fcll:lambda-list-keyword-conflicts)))
 
+(defclass keywords-list-mixin ()
+  ((%keywords-list :initarg :keywords-list
+                   :reader keywords-list
+                   :type lambda-list-keywords-list
+                   :initform (error ":keywords-list argument is required."))))
+
 (defclass standard-raw-lambda-list-keywords-list (raw-lambda-list-keywords-list
-                                                  kl-keywords-set-mixin
-                                                  kl-keyword-order-mixin
-                                                  kl-keyword-conflicts-mixin)
+                                                  lambda-list-keywords-list-slots-mixin)
   ((%keywords-set :initarg :keywords-set)
    (%keyword-order :initarg :keyword-order
                    :initform (defsys:locate 'fcll:lambda-list-keyword-order
@@ -40,13 +40,9 @@
 
 
 (defclass standard-coherent-lambda-list-keywords-list (coherent-lambda-list-keywords-list
-                                                       kl-keywords-set-mixin
-                                                       kl-keyword-order-mixin
-                                                       kl-keyword-conflicts-mixin)
-  ((%keywords-list :initarg :keywords-list
-                   :reader keywords-list
-                   :type lambda-list-keywords-list
-                   :initform (error ":keywords-list argument is required."))))
+                                                       lambda-list-keywords-list-slots-mixin
+                                                       keywords-list-mixin)
+  ())
 
 (defmethod shared-initialize :after ((instance standard-coherent-lambda-list-keywords-list) slot-names
                                      &key (keywords-list nil keywords-list-p))
