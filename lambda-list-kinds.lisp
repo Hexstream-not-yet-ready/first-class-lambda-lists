@@ -39,10 +39,8 @@
                (list
                 `(%derive-keywords-set :from nil :add ',keywords)))))
         `(%ensure-lambda-list-kind ',name ',operator
-                                   (make-instance 'standard-coherent-lambda-list-keywords-list
-                                                  :keywords-list
-                                                  (make-instance 'standard-raw-lambda-list-keywords-list
-                                                                 :keywords-set ,keywords-expansion))
+                                   (make-instance 'standard-raw-lambda-list-keywords-list
+                                                  :keywords-set ,keywords-expansion)
                                    ,@args)))))
 
 
@@ -63,7 +61,7 @@
 (defclass fcll:standard-lambda-list-kind (fcll:lambda-list-kind defsys:name-mixin)
   ((%operator :initarg :operator
               :reader operator)
-   (%keywords-list :initarg :keywords-list
+   (%keywords-list :initarg :keywords-list ;Canonicalized in (shared-initialize :around).
                    :reader keywords-list
                    :reader lambda-list-keywords-list
                    :type lambda-list-keywords-list)
@@ -224,13 +222,21 @@
                     sections)))))))))
 
 (defmethod shared-initialize :around ((kind fcll:standard-lambda-list-kind) slot-names
-                                      &rest initargs &key (recurse nil recurse-p))
+                                      &rest initargs &key
+                                                       (keywords-list nil keywords-list-p)
+                                                       (recurse nil recurse-p))
   (let ((canonicalized
-         (when (and recurse-p
-                    (not (typep recurse '(or null fcll:lambda-list-kind))))
-           (list :recurse (if (eq recurse t)
-                              kind
-                              (fcll:lambda-list-kind recurse))))))
+         (nconc
+          (when keywords-list-p
+            (list :keywords-list
+                  (make-instance 'mapped-lambda-list-keywords-list
+                                 :keywords-list (coherent-lambda-list-keywords-list keywords-list)
+                                 :mapper #'identity)))
+          (when (and recurse-p
+                     (not (typep recurse '(or null fcll:lambda-list-kind))))
+            (list :recurse (if (eq recurse t)
+                               kind
+                               (fcll:lambda-list-kind recurse)))))))
     (if canonicalized
         (apply #'call-next-method kind slot-names (nconc canonicalized initargs))
         (call-next-method))))

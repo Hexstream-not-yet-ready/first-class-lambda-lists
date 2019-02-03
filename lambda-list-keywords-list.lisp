@@ -37,6 +37,15 @@
 (defclass coherent-lambda-list-keywords-list (lambda-list-keywords-list)
   ())
 
+(defgeneric coherent-lambda-list-keywords-list (lambda-list-keywords-list))
+
+(defmethod coherent-lambda-list-keywords-list ((keywords-list raw-lambda-list-keywords-list))
+  (make-instance 'standard-coherent-lambda-list-keywords-list
+                 :keywords-list keywords-list))
+
+(defmethod coherent-lambda-list-keywords-list ((keywords-list coherent-lambda-list-keywords-list))
+  keywords-list)
+
 (defclass standard-coherent-lambda-list-keywords-list (coherent-lambda-list-keywords-list
                                                        lambda-list-keywords-list-slots-mixin
                                                        keywords-list-mixin)
