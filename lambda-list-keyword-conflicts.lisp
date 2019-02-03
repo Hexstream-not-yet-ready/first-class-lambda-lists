@@ -77,7 +77,7 @@
                                                     (list keyword))))))
 
 
-(defclass mapped-lambda-list-keyword-conflicts (fcll:lambda-list-keyword-order keyword-conflicts-mixin mapper-mixin tree-mixin)
+(defclass mapped-lambda-list-keyword-conflicts (fcll:lambda-list-keyword-conflicts keyword-conflicts-mixin mapper-mixin tree-mixin)
   ())
 
 (defmethod %compute-tree ((instance mapped-lambda-list-keyword-conflicts))
