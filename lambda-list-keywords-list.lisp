@@ -8,13 +8,10 @@
 
 (defclass lambda-list-keywords-list-slots-mixin ()
   ((%keywords-set :reader keywords-set
-                  :reader fcll:lambda-list-keywords-set
                   :type fcll:lambda-list-keywords-set)
    (%keyword-order :reader keyword-order
-                   :reader fcll:lambda-list-keyword-order
                    :type fcll:lambda-list-keyword-order)
    (%keyword-conflicts :reader keyword-conflicts
-                       :reader fcll:lambda-list-keyword-conflicts
                        :type fcll:lambda-list-keyword-conflicts)))
 
 (defclass keywords-list-mixin ()
