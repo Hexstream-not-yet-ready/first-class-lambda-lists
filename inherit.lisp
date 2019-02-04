@@ -87,11 +87,21 @@
 
 (defgeneric slot-inherited-value-using-class (class object slot))
 
+(defclass parent-mixin ()
+  ((%parent :initarg :parent
+            :reader parent
+            :initform nil)))
+
 (defun %inherited-value (parent slot)
   (if parent
       (values (slot-value parent (c2mop:slot-definition-name slot))
               t)
       (values nil nil)))
+
+(defmethod slot-inherited-value-using-class ((class standard-inheritable-slots-class)
+                                             (object parent-mixin)
+                                             slot)
+  (%inherited-value (parent object) slot))
 
 (defmethod shared-initialize ((object standard-inheritable-slots-object) slot-names &rest initargs)
   (let* ((class (class-of object))

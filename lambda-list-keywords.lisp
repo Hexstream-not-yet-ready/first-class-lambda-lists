@@ -44,11 +44,8 @@
   (declare (ignore keys))
   name)
 
-(defclass fcll:standard-lambda-list-keyword (fcll:lambda-list-keyword defsys:name-mixin)
-  ((%parent :initarg :parent
-            :reader parent
-            :initform nil)
-   (%arity :initarg :arity
+(defclass fcll:standard-lambda-list-keyword (fcll:lambda-list-keyword parent-mixin defsys:name-mixin)
+  ((%arity :initarg :arity
            :reader arity
            :inherit t)
    (%introducer :initarg :introducer
@@ -71,11 +68,6 @@
    (%parser :reader parser
             :type function))
   (:metaclass standard-inheritable-slots-class))
-
-(defmethod slot-inherited-value-using-class ((class standard-inheritable-slots-class)
-                                             (object fcll:standard-lambda-list-keyword)
-                                             slot)
-  (%inherited-value (parent object) slot))
 
 (defclass fcll:lambda-list-section () ())
 
