@@ -87,6 +87,12 @@
 
 (defgeneric slot-inherited-value-using-class (class object slot))
 
+(defun %inherited-value (parent slot)
+  (if parent
+      (values (slot-value parent (c2mop:slot-definition-name slot))
+              t)
+      (values nil nil)))
+
 (defmethod shared-initialize ((object standard-inheritable-slots-object) slot-names &rest initargs)
   (let* ((class (class-of object))
          (inheritable-slots (inheritable-slots class)))

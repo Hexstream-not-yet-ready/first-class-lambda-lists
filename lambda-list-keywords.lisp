@@ -75,11 +75,7 @@
 (defmethod slot-inherited-value-using-class ((class standard-inheritable-slots-class)
                                              (object fcll:standard-lambda-list-keyword)
                                              slot)
-  (let ((parent (parent object)))
-    (if parent
-        (values (slot-value parent (c2mop:slot-definition-name slot))
-                t)
-        (values nil nil))))
+  (%inherited-value (parent object) slot))
 
 (defclass fcll:lambda-list-section () ())
 
