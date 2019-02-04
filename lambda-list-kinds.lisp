@@ -11,37 +11,40 @@
   (setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-kind)
         *lambda-list-kind-definitions*)
 
-  (defun %ensure-lambda-list-kind (name operator keywords-list &rest initargs)
+  (defun %ensure-lambda-list-kind (name operator raw-keywords-list &rest initargs)
     (apply #'%ensure-definition *lambda-list-kind-definitions* name
            'fcll:standard-lambda-list-kind
-           :operator operator :keywords-list keywords-list initargs))
+           :operator operator :raw-keywords-list raw-keywords-list initargs))
 
-  (defun %derive-keywords-set (&key (from :ordinary) add remove replace)
-    (make-instance 'fcll:derived-lambda-list-keywords-set
-                   :keywords-set (and from (keywords-set (keywords-list (lambda-list-kind from))))
-                   :add add
-                   :remove remove
-                   :replace replace))
+  (defun %derive-keywords-list (&key (from :ordinary) add remove replace)
+    (let ((from (and from (raw-keywords-list (lambda-list-kind from)))))
+      (multiple-value-call #'make-instance 'standard-raw-lambda-list-keywords-list
+                           :keywords-set (make-instance 'fcll:derived-lambda-list-keywords-set
+                                                        :keywords-set (and from (keywords-set from))
+                                                        :add add
+                                                        :remove remove
+                                                        :replace replace)
+                           (if from
+                               (values :keyword-order (keyword-order from)
+                                       :keyword-conflicts (keyword-conflicts from))
+                               (values)))))
 
   (defmethod defsys:expand-definition ((system lambda-list-kind-definitions) name environment args &key)
     (declare (ignore environment))
     (destructuring-bind (operator keywords &rest args) args
-      (let ((keywords-expansion
+      (let ((keywords-list
              (etypecase keywords
                ((cons (eql :derive) list)
-                `(%derive-keywords-set ,@(mapcan (let ((processp t))
-                                                   (lambda (key value)
-                                                     (prog1 (when processp
-                                                              (list key `',value))
-                                                       (setf processp (not processp)))))
-                                                 (cdr keywords)
-                                                 (cddr keywords))))
+                `(%derive-keywords-list ,@(mapcan (let ((processp t))
+                                                    (lambda (key value)
+                                                      (prog1 (when processp
+                                                               (list key `',value))
+                                                        (setf processp (not processp)))))
+                                                  (cdr keywords)
+                                                  (cddr keywords))))
                (list
-                `(%derive-keywords-set :from nil :add ',keywords)))))
-        `(%ensure-lambda-list-kind ',name ',operator
-                                   (make-instance 'standard-raw-lambda-list-keywords-list
-                                                  :keywords-set ,keywords-expansion)
-                                   ,@args)))))
+                `(%derive-keywords-list :from nil :add ',keywords)))))
+        `(%ensure-lambda-list-kind ',name ',operator ,keywords-list ,@args)))))
 
 
 (defclass fcll:lambda-list-kind () ())
@@ -61,10 +64,12 @@
 (defclass fcll:standard-lambda-list-kind (fcll:lambda-list-kind defsys:name-mixin)
   ((%operator :initarg :operator
               :reader operator)
-   (%keywords-list :initarg :keywords-list ;Canonicalized in (shared-initialize :around).
+   (%raw-keywords-list :initarg :raw-keywords-list
+                       :reader raw-keywords-list
+                       :type raw-lambda-list-keywords-list)
+   (%keywords-list :initarg :keywords-list
                    :reader keywords-list
-                   :reader lambda-list-keywords-list
-                   :type lambda-list-keywords-list)
+                   :type coherent-lambda-list-keywords-list)
    (%recurse :initarg :recurse ;Canonicalized in (shared-initialize :around).
              :reader recurse
              :type (or null fcll:lambda-list-kind)
@@ -223,14 +228,14 @@
 
 (defmethod shared-initialize :around ((kind fcll:standard-lambda-list-kind) slot-names
                                       &rest initargs &key
-                                                       (keywords-list nil keywords-list-p)
+                                                       (raw-keywords-list nil raw-keywords-list-p)
                                                        (recurse nil recurse-p))
   (let ((canonicalized
          (nconc
-          (when keywords-list-p
+          (when raw-keywords-list-p
             (list :keywords-list
                   (make-instance 'mapped-lambda-list-keywords-list
-                                 :keywords-list (coherent-lambda-list-keywords-list keywords-list)
+                                 :keywords-list (coherent-lambda-list-keywords-list raw-keywords-list)
                                  :mapper #'identity)))
           (when (and recurse-p
                      (not (typep recurse '(or null fcll:lambda-list-kind))))
