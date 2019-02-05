@@ -56,6 +56,7 @@
 (defclass standard-inheritable-slots-object (standard-object)
   ())
 
+#+nil
 (defmethod c2mop:compute-class-precedence-list ((class standard-inheritable-slots-class))
   (let ((class-precedence-list (call-next-method))
         (target (find-class 'standard-inheritable-slots-object)))

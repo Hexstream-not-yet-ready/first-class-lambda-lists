@@ -218,7 +218,7 @@
 
   (define-test "inherit"
     :compile-at :execute
-    (defclass test-inheritable-slots-class ()
+    (defclass test-inheritable-slots-class (fcll::standard-inheritable-slots-object)
       ((%parent :initarg :parent
                 :reader parent
                 :initform nil)

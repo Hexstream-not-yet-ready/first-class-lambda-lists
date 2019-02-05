@@ -79,6 +79,21 @@
                       :initform nil)
    (%parser :reader parser)))
 
+(defclass effective-lambda-list-keywords-list (coherent-lambda-list-keywords-list)
+  ())
+
+(defclass standard-effective-lambda-list-keywords-list (effective-lambda-list-keywords-list
+                                                        mapped-lambda-list-keywords-list)
+  ())
+
+(defclass effective-lambda-list-keyword (fcll:lambda-list-keyword)
+  ())
+
+(defclass standard-effective-lambda-list-keyword (fcll:standard-lambda-list-keyword
+                                                  effective-lambda-list-keyword)
+  ()
+  (:metaclass standard-inheritable-slots-class))
+
 (defun %make-list-processor-maker (recurse args)
   (let ((arg-processor-makers (mapcar recurse args)))
     (lambda ()
@@ -234,9 +249,11 @@
          (nconc
           (when raw-keywords-list-p
             (list :keywords-list
-                  (make-instance 'mapped-lambda-list-keywords-list
+                  (make-instance 'standard-effective-lambda-list-keywords-list
                                  :keywords-list (coherent-lambda-list-keywords-list raw-keywords-list)
-                                 :mapper #'identity)))
+                                 :mapper (lambda (parent)
+                                           (make-instance 'standard-effective-lambda-list-keyword
+                                                          :parent parent)))))
           (when (and recurse-p
                      (not (typep recurse '(or null fcll:lambda-list-kind))))
             (list :recurse (if (eq recurse t)

@@ -44,7 +44,7 @@
   (declare (ignore keys))
   name)
 
-(defclass fcll:standard-lambda-list-keyword (fcll:lambda-list-keyword parent-mixin defsys:name-mixin)
+(defclass fcll:standard-lambda-list-keyword (fcll:lambda-list-keyword parent-mixin defsys:name-mixin standard-inheritable-slots-object)
   ((%arity :initarg :arity
            :reader arity
            :inherit t)
