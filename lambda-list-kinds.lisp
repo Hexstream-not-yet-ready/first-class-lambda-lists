@@ -86,12 +86,26 @@
                                                         mapped-lambda-list-keywords-list)
   ())
 
+(defmethod shared-initialize :after ((keywords-list standard-effective-lambda-list-keywords-list) slot-names &key)
+  (declare (ignore slot-names))
+  (let ((keyword-conflicts (tree (keyword-conflicts keywords-list))))
+    (dolist (lambda-list-keyword (lambda-list-keywords (keywords-set keywords-list)))
+      (setf (slot-value lambda-list-keyword '%conflicts-with)
+            (and keyword-conflicts
+                 (labels ((recurse (spec)
+                            (destructuring-bind (operator &rest args) spec
+                              (ecase operator
+                                (or (delete-duplicates (mapcan #'recurse args) :test #'eq))
+                                (and (when (member lambda-list-keyword args :test #'eq)
+                                       (delete lambda-list-keyword (copy-list args) :test #'eq)))))))
+                   (recurse keyword-conflicts)))))))
+
 (defclass effective-lambda-list-keyword (fcll:lambda-list-keyword)
   ())
 
 (defclass standard-effective-lambda-list-keyword (fcll:standard-lambda-list-keyword
                                                   effective-lambda-list-keyword)
-  ()
+  ((%conflicts-with :reader conflicts-with))
   (:metaclass standard-inheritable-slots-class))
 
 (defun %make-list-processor-maker (recurse args)
@@ -164,82 +178,69 @@
              (format stream "The following lambda list keywords conflict:~%~S"
                      (lambda-list-keywords condition)))))
 
-(defun %make-keyword-processor-maker (lambda-list-keyword keyword-conflicts backtrackp)
-  (let ((keyword-conflicts (tree keyword-conflicts))
-        (inner
+(defun %make-keyword-processor-maker (lambda-list-keyword backtrackp)
+  (let ((inner
          (let ((parser (parser lambda-list-keyword)))
            (if backtrackp
                (lambda (tail)
                  (let ((new-tail (funcall parser tail)))
                    (values new-tail (not (eq new-tail tail)))))
                parser))))
-    (if keyword-conflicts
-        ;; TODO: Optimize according to lambda list keyword order.
-        (let* ((conflicts-with
-                (labels ((recurse (spec)
-                           (destructuring-bind (operator &rest args) spec
-                             (ecase operator
-                               (or (delete-duplicates (mapcan #'recurse args)
-                                                      :test #'eq))
-                               (and (when (member lambda-list-keyword args :test #'eq)
-                                      (delete lambda-list-keyword (copy-list args) :test #'eq)))))))
-                  (recurse keyword-conflicts)))
-               (inner (if conflicts-with
-                          ;; TODO: Don't parse introducer twice.
-                          (let ((introducer (introducer lambda-list-keyword)))
-                            (%make-introducer-parser
-                             introducer
-                             (lambda (tail)
-                               (let ((conflicts (remove-if-not (lambda (lambda-list-keyword)
-                                                                 (member lambda-list-keyword
-                                                                         conflicts-with
-                                                                         :test #'eq))
-                                                               *sections*
-                                                               :key #'fcll:lambda-list-keyword)))
-                                 (if conflicts
-                                     (%malformed-lambda-list 'fcll:lambda-list-keywords-conflict
-                                                             :lambda-list-keywords conflicts)
-                                     (funcall inner (cons introducer tail)))))))
-                          inner)))
-          (lambda ()
-            inner))
-        (lambda ()
-          inner))))
+    ;; TODO: Optimize according to lambda list keyword order.
+    (let* ((conflicts-with (conflicts-with lambda-list-keyword))
+           (inner (if conflicts-with
+                      ;; TODO: Don't parse introducer twice.
+                      (let ((introducer (introducer lambda-list-keyword)))
+                        (%make-introducer-parser
+                         introducer
+                         (lambda (tail)
+                           (let ((conflicts (remove-if-not (lambda (lambda-list-keyword)
+                                                             (member lambda-list-keyword
+                                                                     conflicts-with
+                                                                     :test #'eq))
+                                                           *sections*
+                                                           :key #'fcll:lambda-list-keyword)))
+                             (if conflicts
+                                 (%malformed-lambda-list 'fcll:lambda-list-keywords-conflict
+                                                         :lambda-list-keywords conflicts)
+                                 (funcall inner (cons introducer tail)))))))
+                      inner)))
+      (lambda ()
+        inner))))
 
 ;;; ↑ WORST. CODE. EVER! ↓
 
 (defun %make-parser (keywords-list parse-recursable-variable)
-  (let ((keyword-conflicts (keyword-conflicts keywords-list)))
-    (labels ((recurse (spec &optional backtrackp)
-               (etypecase spec
-                 (cons (destructuring-bind (operator &rest args) spec
-                         (check-type args cons)
-                         (ecase operator
-                           (list (%make-list-processor-maker #'recurse args))
-                           (or (%make-or-processor-maker #'recurse args)))))
-                 (fcll:lambda-list-keyword
-                  (%make-keyword-processor-maker spec keyword-conflicts backtrackp)))))
-      (let ((parser-maker (recurse (tree (keyword-order keywords-list)))))
-        (lambda (tail)
-          (let ((*sections* nil)
-                (*%malformed-lambda-list*
-                 (lambda (error-type &rest args)
-                   (apply #'error error-type
-                          :root-lambda-list *root-lambda-list*
-                          :specification tail
-                          args))))
-            (multiple-value-bind (new-tail donep)
-                (let* ((parser (funcall parser-maker))
-                       (*parse-recursable-variable* parse-recursable-variable))
-                  (funcall parser tail))
-              (let ((sections (nreverse *sections*)))
-                (if new-tail
-                    (%malformed-lambda-list 'simple-malformed-lambda-list-error
-                                            :tail new-tail
-                                            :format-control "Could not completely parse lambda list.~@
-                                                             donep: ~S~%sections: ~S"
-                                            :format-arguments (list donep sections))
-                    sections)))))))))
+  (labels ((recurse (spec &optional backtrackp)
+             (etypecase spec
+               (cons (destructuring-bind (operator &rest args) spec
+                       (check-type args cons)
+                       (ecase operator
+                         (list (%make-list-processor-maker #'recurse args))
+                         (or (%make-or-processor-maker #'recurse args)))))
+               (fcll:lambda-list-keyword
+                (%make-keyword-processor-maker spec backtrackp)))))
+    (let ((parser-maker (recurse (tree (keyword-order keywords-list)))))
+      (lambda (tail)
+        (let ((*sections* nil)
+              (*%malformed-lambda-list*
+               (lambda (error-type &rest args)
+                 (apply #'error error-type
+                        :root-lambda-list *root-lambda-list*
+                        :specification tail
+                        args))))
+          (multiple-value-bind (new-tail donep)
+              (let* ((parser (funcall parser-maker))
+                     (*parse-recursable-variable* parse-recursable-variable))
+                (funcall parser tail))
+            (let ((sections (nreverse *sections*)))
+              (if new-tail
+                  (%malformed-lambda-list 'simple-malformed-lambda-list-error
+                                          :tail new-tail
+                                          :format-control "Could not completely parse lambda list.~@
+                                                           donep: ~S~%sections: ~S"
+                                          :format-arguments (list donep sections))
+                  sections))))))))
 
 (defmethod shared-initialize :around ((kind fcll:standard-lambda-list-kind) slot-names
                                       &rest initargs &key
@@ -253,6 +254,7 @@
                                  :keywords-list (coherent-lambda-list-keywords-list raw-keywords-list)
                                  :mapper (lambda (parent)
                                            (make-instance 'standard-effective-lambda-list-keyword
+                                                          :name (defsys:name parent)
                                                           :parent parent)))))
           (when (and recurse-p
                      (not (typep recurse '(or null fcll:lambda-list-kind))))
