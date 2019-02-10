@@ -211,36 +211,37 @@
 ;;; ↑ WORST. CODE. EVER! ↓
 
 (defun %make-parser (keywords-list parse-recursable-variable)
-  (labels ((recurse (spec &optional backtrackp)
-             (etypecase spec
-               (cons (destructuring-bind (operator &rest args) spec
-                       (check-type args cons)
-                       (ecase operator
-                         (list (%make-list-processor-maker #'recurse args))
-                         (or (%make-or-processor-maker #'recurse args)))))
-               (fcll:lambda-list-keyword
-                (%make-keyword-processor-maker spec backtrackp)))))
-    (let ((parser-maker (recurse (tree (keyword-order keywords-list)))))
-      (lambda (tail)
-        (let ((*sections* nil)
-              (*%malformed-lambda-list*
-               (lambda (error-type &rest args)
-                 (apply #'error error-type
-                        :root-lambda-list *root-lambda-list*
-                        :specification tail
-                        args))))
-          (multiple-value-bind (new-tail donep)
-              (let* ((parser (funcall parser-maker))
-                     (*parse-recursable-variable* parse-recursable-variable))
-                (funcall parser tail))
-            (let ((sections (nreverse *sections*)))
-              (if new-tail
-                  (%malformed-lambda-list 'simple-malformed-lambda-list-error
-                                          :tail new-tail
-                                          :format-control "Could not completely parse lambda list.~@
-                                                           donep: ~S~%sections: ~S"
-                                          :format-arguments (list donep sections))
-                  sections))))))))
+  (let ((parser-maker
+         (labels ((recurse (spec &optional backtrackp)
+                    (etypecase spec
+                      (cons (destructuring-bind (operator &rest args) spec
+                              (check-type args cons)
+                              (ecase operator
+                                (list (%make-list-processor-maker #'recurse args))
+                                (or (%make-or-processor-maker #'recurse args)))))
+                      (fcll:lambda-list-keyword
+                       (%make-keyword-processor-maker spec backtrackp)))))
+           (recurse (tree (keyword-order keywords-list))))))
+    (lambda (tail)
+      (let ((*sections* nil)
+            (*%malformed-lambda-list*
+             (lambda (error-type &rest args)
+               (apply #'error error-type
+                      :root-lambda-list *root-lambda-list*
+                      :specification tail
+                      args))))
+        (multiple-value-bind (new-tail donep)
+            (let* ((parser (funcall parser-maker))
+                   (*parse-recursable-variable* parse-recursable-variable))
+              (funcall parser tail))
+          (let ((sections (nreverse *sections*)))
+            (if new-tail
+                (%malformed-lambda-list 'simple-malformed-lambda-list-error
+                                        :tail new-tail
+                                        :format-control "Could not completely parse lambda list.~@
+                                                         donep: ~S~%sections: ~S"
+                                        :format-arguments (list donep sections))
+                sections)))))))
 
 (defmethod shared-initialize :around ((kind fcll:standard-lambda-list-kind) slot-names
                                       &rest initargs &key
