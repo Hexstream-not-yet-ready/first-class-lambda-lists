@@ -5,7 +5,7 @@
   ;; See the UNLICENSE file for details.
   :license "Public Domain"
 
-  :description "To be described."
+  :description "Provides a simple unified extensible way of processing lambda lists."
 
   :depends-on ("definitions-systems"
                "bubble-operator-upwards"
