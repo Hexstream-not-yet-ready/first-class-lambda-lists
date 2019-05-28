@@ -1,5 +1,16 @@
 (in-package #:first-class-lambda-lists)
 
+(defclass expansion-environment ()
+  ())
+
+(defgeneric expand (object expansion-env form))
+
+(defun %expand-lambda-list (lambda-list expression form)
+  (let ((expansion-env (make-instance 'standard-expansion-environment)))
+    `(let ((,(tail-var expansion-env) ,expression))
+       ,(expand lambda-list expansion-env form))))
+
+
 (defclass parameter () ())
 
 (defgeneric fcll:unparse (object))
@@ -70,6 +81,20 @@
 (defmethod fcll:unparse ((parameter required-parameter))
   (%unparse-recursable-variable (variable parameter)))
 
+(defmethod expand ((parameter required-parameter) (expansion-env expansion-environment) form)
+  (let ((tail-var (tail-var expansion-env))
+        (var-or-lambda-list (variable parameter)))
+    (etypecase var-or-lambda-list
+      (symbol (let ((variable var-or-lambda-list))
+                `(let ((,variable (prog1 (car ,tail-var)
+                                    (setf ,tail-var (cdr ,tail-var)))))
+                   ,form)))
+      (fcll:lambda-list (let ((lambda-list var-or-lambda-list))
+                          (%expand-lambda-list lambda-list
+                                               `(prog1 (car ,tail-var)
+                                                  (setf ,tail-var (cdr ,tail-var)))
+                                               form))))))
+
 (defclass specializable-parameter (required-parameter)
   ((%specializer :initarg :specializer
                  :reader specializer
@@ -124,6 +149,35 @@
           ,@(when initform-or-suppliedp (list initform))
           ,@(when suppliedp-variable (list suppliedp-variable)))
         variable)))
+
+(defmethod expand ((parameter optional-parameter) (expansion-env expansion-environment) form)
+  (let ((tail-var (tail-var expansion-env))
+        (var-or-lambda-list (variable parameter))
+        (initform (initform parameter))
+        (suppliedp-variable (suppliedp-variable parameter)))
+    (etypecase var-or-lambda-list
+      (symbol (let ((variable var-or-lambda-list))
+                `(let (,@(when suppliedp-variable
+                               (list `(,suppliedp-variable (not (null ,tail-var)))))
+                       (,variable (if ,tail-var
+                                      (prog1 (car ,tail-var)
+                                        (setf ,tail-var (cdr ,tail-var)))
+                                      ,initform)))
+                   ,form)))
+      (fcll:lambda-list
+       (let ((lambda-list var-or-lambda-list))
+         (%expand-lambda-list lambda-list
+                              `(if ,tail-var
+                                   ,(if suppliedp-variable
+                                        `(car ,tail-var)
+                                        `(prog1 (car ,tail-var)
+                                           (setf ,tail-var (cdr ,tail-var))))
+                                   ,initform)
+                              (if suppliedp-variable
+                                  `(let ((,suppliedp-variable (prog1 (not (null ,tail-var))
+                                                                (setf ,tail-var (cdr ,tail-var)))))
+                                     ,form)
+                                  form)))))))
 
 (defclass optional-no-defaulting-parameter (parameter parameter-simple-variable-mixin)
   ())

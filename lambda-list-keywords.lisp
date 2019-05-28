@@ -94,6 +94,13 @@
             (defsys:name (fcll:lambda-list-keyword section))
             (mapcar #'fcll:unparse (parameters section)))))
 
+(defmethod expand ((section fcll:standard-lambda-list-section) (expansion-env expansion-environment) form)
+  (reduce (lambda (parameter form)
+            (expand parameter expansion-env form))
+          (parameters section)
+          :from-end t
+          :initial-value form))
+
 (defclass standard-&key-section (fcll:standard-lambda-list-section)
   ((%allow-other-keys-p :initarg :allow-other-keys-p
                         :reader allow-other-keys-p

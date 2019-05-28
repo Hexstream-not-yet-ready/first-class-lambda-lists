@@ -70,3 +70,21 @@
 
 (defmethod fcll:parse ((kind fcll:lambda-list-kind) specification)
   (make-instance 'fcll:standard-lambda-list :kind kind :parse specification))
+
+(defmethod expand ((lambda-list fcll:standard-lambda-list) (expansion-env expansion-environment) body)
+  (reduce (lambda (section body)
+            (expand section expansion-env body))
+          (%sections lambda-list)
+          :from-end t
+          :initial-value body))
+
+(defclass standard-expansion-environment (expansion-environment)
+  ((%tail-var :initarg :tail-var
+              :reader tail-var
+              :initform (gensym (string '#:tail)))))
+
+(defmacro bind (lambda-list-kind lambda-list expression &body body)
+  (let ((lambda-list (make-instance 'fcll:standard-lambda-list :kind lambda-list-kind :parse lambda-list)))
+    (%expand-lambda-list lambda-list expression (if (= (length body) 1)
+                                                    (car body)
+                                                    `(progn ,@body)))))

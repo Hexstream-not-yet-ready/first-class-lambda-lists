@@ -26,6 +26,7 @@
            #:standard-lambda-list
            #:parse
            #:unparse
+           #:bind
 
            #:malformed-lambda-list
            #:lambda-list-keywords-conflict))

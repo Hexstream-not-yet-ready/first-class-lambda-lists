@@ -215,6 +215,14 @@
   (fails :macro '(&rest rest &body body) 'fcll:lambda-list-keywords-conflict)
   (fails :macro '(&body body &rest rest) 'fcll:lambda-list-keywords-conflict)
   (fails :defsetf '(&environment env foo) 'fcll:malformed-lambda-list)
+  (fcll:bind :ordinary (var1 var2 &optional var3 var4 (var5 'initform1) (var6 'initform2 var6-supplied-p)) '(value1 value2 value3)
+    (is eq 'value1 var1)
+    (is eq 'value2 var2)
+    (is eq 'value3 var3)
+    (is eq nil var4)
+    (is eq 'initform1 var5)
+    (is eq 'initform2 var6)
+    (is eq nil var6-supplied-p))
 
   (define-test "inherit"
     :compile-at :execute
