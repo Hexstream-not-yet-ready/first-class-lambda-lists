@@ -305,3 +305,9 @@
     (if initform
         `(,variable ,initform)
         variable)))
+
+(defmethod expand ((parameter aux-parameter) (expansion-env expansion-environment) form)
+  (let ((variable (variable parameter))
+        (initform (initform parameter)))
+    `(let ((,variable ,initform))
+       ,form)))
