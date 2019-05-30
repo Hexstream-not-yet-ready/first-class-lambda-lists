@@ -16,6 +16,7 @@
   :serial cl:t
   :components ((:file "package")
                (:file "lambda-list-parameters")
+               (:file "lambda-list-sections")
                (:file "inherit")
                (:file "lambda-list-keywords")
                (:file "lambda-list-keywords-set")
