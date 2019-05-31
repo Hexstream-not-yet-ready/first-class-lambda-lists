@@ -24,6 +24,7 @@
                (:file "lambda-list-keyword-conflicts")
                (:file "lambda-list-keywords-list")
                (:file "lambda-list-kinds")
-               (:file "lambda-lists"))
+               (:file "lambda-lists")
+               (:file "definitions"))
 
   :in-order-to ((asdf:test-op (asdf:test-op #:first-class-lambda-lists_tests))))

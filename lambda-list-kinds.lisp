@@ -280,39 +280,3 @@
                               (lambda (variable)
                                 (declare (ignore variable))
                                 (error "Tried to parse a recursable variable in a non-recursive context."))))))))
-
-(define (fcll:lambda-list-kind :ordinary) defun
-  (:required &optional &rest &key &aux)) ;&allow-other-keys is subordinate to &key, so implied by it.
-
-(define (fcll:lambda-list-kind :generic-function) defgeneric
-  (:derive :replace ((&optional :&optional-no-defaulting)
-                     (&key :&key-no-defaulting))
-           :remove &aux))
-
-(define (fcll:lambda-list-kind :specialized) defmethod
-  (:derive :replace ((:required :required-specializable))))
-
-(define (fcll:lambda-list-kind :destructuring) destructuring-bind
-  (:derive :add (&whole &body))
-  :recurse t)
-
-(define (fcll:lambda-list-kind :macro) defmacro
-  (:derive :from :destructuring :add :&environment-not-before-&whole)
-  :recurse :destructuring)
-
-(define (fcll:lambda-list-kind :boa) defstruct
-  (:derive))
-
-(define (fcll:lambda-list-kind :defsetf) defsetf
-  (:derive :add :&environment-last :remove &aux))
-
-(define (fcll:lambda-list-kind :deftype) deftype
-  (:derive :from :macro)
-  :recurse :destructuring
-  :default-initform ''*)
-
-(define (fcll:lambda-list-kind :define-modify-macro) define-modify-macro
-  (:derive :remove (&key &aux)))
-
-(define (fcll:lambda-list-kind :define-method-combination-arguments) define-method-combination
-  (:derive :add &whole))

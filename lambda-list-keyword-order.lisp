@@ -90,14 +90,3 @@
                                           (let ((mapper (mapper instance)))
                                             (lambda (keyword)
                                               (list (funcall mapper keyword))))))
-
-
-(define (fcll:lambda-list-keyword-order :standard)
-  (list &whole
-        (or (list (or :required :required-specializable)
-                  (or &optional :&optional-no-defaulting)
-                  (or &rest &body)
-                  (or &key :&key-no-defaulting)
-                  &aux
-                  :&environment-last)
-            :&environment-not-before-&whole)))

@@ -85,7 +85,3 @@
                                               (let ((mapper (mapper instance)))
                                                 (lambda (keyword)
                                                   (list (funcall mapper keyword))))))
-
-
-(define (fcll:lambda-list-keyword-conflicts :standard)
-  (and &rest &body))
