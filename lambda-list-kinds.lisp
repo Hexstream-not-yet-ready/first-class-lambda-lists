@@ -171,12 +171,35 @@
 
 (defparameter *root-lambda-list* nil)
 
+
+(define-condition fcll:malformed-lambda-list (error)
+  ((%root-lambda-list :initarg :root-lambda-list
+                      :reader root-lambda-list)
+   (%specification :initarg :specification
+                   :reader specification)
+   (%tail :initarg :tail
+          :reader tail)))
+
+(define-condition simple-malformed-lambda-list-error (fcll:malformed-lambda-list simple-error)
+  ())
+
+(defvar *%malformed-lambda-list*)
+
+(defun %malformed-lambda-list (error-type &rest args)
+  (apply *%malformed-lambda-list* error-type args))
+
+
 (define-condition fcll:lambda-list-keywords-conflict (fcll:malformed-lambda-list)
   ((%keywords :initarg :lambda-list-keywords
               :reader lambda-list-keywords))
   (:report (lambda (condition stream)
              (format stream "The following lambda list keywords conflict:~%~S"
                      (lambda-list-keywords condition)))))
+
+(defvar *sections*)
+
+(defun %add-section (section)
+  (push section *sections*))
 
 (defun %make-keyword-processor-maker (lambda-list-keyword backtrackp)
   (let ((inner
@@ -209,6 +232,8 @@
         inner))))
 
 ;;; ↑ WORST. CODE. EVER! ↓
+
+(defvar *parse-recursable-variable*)
 
 (defun %make-parser (keywords-list parse-recursable-variable)
   (let ((parser-maker

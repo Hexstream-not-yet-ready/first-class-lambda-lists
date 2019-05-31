@@ -44,12 +44,6 @@
       (call-next-method)))
 
 
-(defvar *sections*)
-
-(defun %add-section (section)
-  (push section *sections*))
-
-
 (defun %apparent-lambda-list-keyword-p (object)
   (let ((symbol-name (and (symbolp object) (symbol-name object))))
     (and (plusp (length symbol-name)) (char= (char symbol-name 0) #\&))))
@@ -114,20 +108,3 @@
                                       :parameters (map-into head parameter-parser head)
                                       :allow-other-keys-p allow-other-keys-p))
          end)))))
-
-
-(define-condition fcll:malformed-lambda-list (error)
-  ((%root-lambda-list :initarg :root-lambda-list
-                      :reader root-lambda-list)
-   (%specification :initarg :specification
-                   :reader specification)
-   (%tail :initarg :tail
-          :reader tail)))
-
-(define-condition simple-malformed-lambda-list-error (fcll:malformed-lambda-list simple-error)
-  ())
-
-(defvar *%malformed-lambda-list*)
-
-(defun %malformed-lambda-list (error-type &rest args)
-  (apply *%malformed-lambda-list* error-type args))

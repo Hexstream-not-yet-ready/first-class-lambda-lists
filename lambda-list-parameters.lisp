@@ -29,8 +29,6 @@
 (defclass parameter-recursable-variable-mixin (parameter-variable-mixin)
   ((%variable :type (or symbol fcll:lambda-list))))
 
-(defvar *parse-recursable-variable*)
-
 (defparameter *default-initform* nil)
 
 (defun %default-initform (&optional (to-test nil testp))
