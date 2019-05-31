@@ -12,19 +12,6 @@
                 :type list
                 :initform nil)))
 
-(defmethod fcll:unparse ((section fcll:standard-lambda-list-section))
-  (let ((introducer (introducer (fcll:lambda-list-keyword section)))
-        (parameters (mapcar #'fcll:unparse (parameters section))))
-    (if introducer
-        (cons introducer parameters)
-        parameters)))
-
-(defmethod print-object ((section fcll:standard-lambda-list-section) stream)
-  (print-unreadable-object (section stream :type t)
-    (format stream "~S~{ ~S~}"
-            (defsys:name (fcll:lambda-list-keyword section))
-            (mapcar #'fcll:unparse (parameters section)))))
-
 (defmethod expand ((section fcll:standard-lambda-list-section) (expansion-env expansion-environment) form)
   (reduce (lambda (parameter form)
             (expand parameter expansion-env form))
@@ -37,11 +24,6 @@
                         :reader allow-other-keys-p
                         :type boolean
                         :initform nil)))
-
-(defmethod fcll:unparse ((section standard-&key-section))
-  (if (allow-other-keys-p section)
-      (append (call-next-method) '(&allow-other-keys))
-      (call-next-method)))
 
 
 (defun %apparent-lambda-list-keyword-p (object)

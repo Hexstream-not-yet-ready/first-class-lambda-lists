@@ -13,12 +13,6 @@
 
 (defclass parameter () ())
 
-(defgeneric fcll:unparse (object))
-
-(defmethod print-object ((parameter parameter) stream)
-  (print-unreadable-object (parameter stream :type t)
-    (prin1 (fcll:unparse parameter) stream)))
-
 (defclass parameter-variable-mixin ()
   ((%variable :initarg :variable
               :reader variable)))
@@ -41,11 +35,6 @@
     (list (funcall *parse-recursable-variable* variable))
     (symbol variable)))
 
-(defun %unparse-recursable-variable (variable-or-lambda-list)
-  (etypecase variable-or-lambda-list
-    (symbol variable-or-lambda-list)
-    (fcll:lambda-list (unparse variable-or-lambda-list))))
-
 (defclass parameter-initform-mixin ()
   ((%initform :initarg :initform
               :reader initform
@@ -67,17 +56,11 @@
 (defun %parse-simple-recursable-parameter (parameter)
   (make-instance 'simple-parameter :variable (%parse-recursable-variable parameter)))
 
-(defmethod fcll:unparse ((parameter simple-parameter))
-  (variable parameter))
-
 (defclass required-parameter (parameter parameter-recursable-variable-mixin)
   ())
 
 (defun %parse-required-parameter (parameter)
   (make-instance 'required-parameter :variable (%parse-recursable-variable parameter)))
-
-(defmethod fcll:unparse ((parameter required-parameter))
-  (%unparse-recursable-variable (variable parameter)))
 
 (defmethod expand ((parameter required-parameter) (expansion-env expansion-environment) form)
   (let ((tail-var (tail-var expansion-env))
@@ -110,13 +93,6 @@
                    :variable variable
                    :specializer specializer)))
 
-(defmethod fcll:unparse ((parameter specializable-parameter))
-  (let ((variable (variable parameter))
-        (specializer (specializer parameter)))
-    (if (and (eq specializer t) (not (typep variable 'fcll:lambda-list)))
-        variable
-        (list (%unparse-recursable-variable variable) specializer))))
-
 (defclass optional-parameter (parameter parameter-recursable-variable-mixin parameter-initform-mixin parameter-suppliedp-variable-mixin)
   ())
 
@@ -135,18 +111,6 @@
                    :variable variable
                    :initform initform
                    :suppliedp-variable suppliedp-variable)))
-
-(defmethod fcll:unparse ((parameter optional-parameter))
-  (let* ((variable (variable parameter))
-         (initform (initform parameter))
-         (initform-not-default-p (not (%default-initform initform)))
-         (suppliedp-variable (suppliedp-variable parameter))
-         (initform-or-suppliedp (or initform-not-default-p suppliedp-variable)))
-    (if (or initform-or-suppliedp (typep variable 'fcll:lambda-list))
-        `(,(%unparse-recursable-variable variable)
-          ,@(when initform-or-suppliedp (list initform))
-          ,@(when suppliedp-variable (list suppliedp-variable)))
-        variable)))
 
 (defmethod expand ((parameter optional-parameter) (expansion-env expansion-environment) form)
   (let ((tail-var (tail-var expansion-env))
@@ -186,9 +150,6 @@
                              (symbol parameter)
                              ((cons symbol null)
                               (car parameter)))))
-
-(defmethod fcll:unparse ((parameter optional-no-defaulting-parameter))
-  (variable parameter))
 
 (defclass parameter-keyword-name-mixin ()
   ((%keyword-name :initarg :keyword-name
@@ -231,28 +192,6 @@
                    :suppliedp-variable suppliedp-variable
                    :keyword-name keyword-name)))
 
-(defmethod fcll:unparse ((parameter key-parameter))
-  (let ((variable (variable parameter))
-        (keyword-name (keyword-name parameter))
-        (initform (initform parameter))
-        (suppliedp-variable (suppliedp-variable parameter)))
-    (let ((custom-keyword-name-p (or (not (keywordp keyword-name))
-                                     (string/= (symbol-name keyword-name)
-                                               (symbol-name variable))))
-          (initform-not-default-p (not (%default-initform initform)))
-          (recursivep :untested))
-      ;; Do the "expensive" TYPEP only once, and only as a last resort.
-      (if (or custom-keyword-name-p initform-not-default-p suppliedp-variable
-              (setf recursivep (typep variable 'fcll:lambda-list)))
-          `(,(if (or custom-keyword-name-p (if (eq recursivep :untested)
-                                               (typep variable 'fcll:lambda-list)
-                                               recursivep))
-                 (list keyword-name (%unparse-recursable-variable variable))
-                 variable)
-             ,@(when (or initform-not-default-p suppliedp-variable) (list initform))
-             ,@(when suppliedp-variable (list suppliedp-variable)))
-          variable))))
-
 (defclass key-no-defaulting-parameter (parameter parameter-simple-variable-mixin parameter-keyword-name-mixin)
   ())
 
@@ -273,16 +212,6 @@
                    :variable variable
                    :keyword-name keyword-name)))
 
-(defmethod fcll:unparse ((parameter key-no-defaulting-parameter))
-  (let ((variable (variable parameter))
-        (keyword-name (keyword-name parameter)))
-    (let ((custom-keyword-name-p (or (not (keywordp keyword-name))
-                                     (string/= (symbol-name keyword-name)
-                                               (symbol-name variable)))))
-      (if custom-keyword-name-p
-          `((,keyword-name ,variable))
-          variable))))
-
 (defclass aux-parameter (parameter parameter-simple-variable-mixin parameter-initform-mixin)
   ())
 
@@ -296,13 +225,6 @@
     (make-instance 'aux-parameter
                    :variable variable
                    :initform initform)))
-
-(defmethod fcll:unparse ((parameter aux-parameter))
-  (let ((variable (variable parameter))
-        (initform (initform parameter)))
-    (if initform
-        `(,variable ,initform)
-        variable)))
 
 (defmethod expand ((parameter aux-parameter) (expansion-env expansion-environment) form)
   (let ((variable (variable parameter))

@@ -25,6 +25,7 @@
                (:file "lambda-list-parameters")
                (:file "lambda-list-sections")
                (:file "lambda-lists")
+               (:file "unparse")
                (:file "definitions"))
 
   :in-order-to ((asdf:test-op (asdf:test-op #:first-class-lambda-lists_tests))))

@@ -33,16 +33,6 @@
          (*root-lambda-list* root-lambda-list))
     (funcall function)))
 
-(defmethod fcll:unparse ((lambda-list fcll:standard-lambda-list))
-  (%call-with-root-lambda-list-setup
-   lambda-list
-   (lambda ()
-     (reduce #'append
-             (%sections lambda-list)
-             :from-end t
-             :key #'fcll:unparse
-             :initial-value nil))))
-
 (defmethod print-object ((lambda-list fcll:standard-lambda-list) stream)
   (print-unreadable-object (lambda-list stream :type t)
     (format stream "~S ~S"
