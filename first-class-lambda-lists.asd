@@ -8,7 +8,6 @@
   :description "Provides a simple unified extensible way of processing lambda lists."
 
   :depends-on ("definitions-systems"
-               "bubble-operator-upwards"
                "enhanced-eval-when"
                "closer-mop")
 
