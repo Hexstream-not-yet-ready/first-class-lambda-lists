@@ -29,6 +29,7 @@
                (:file "lambda-lists")
 
                (:file "unparse")
+               (:file "expand")
 
                (:file "definitions"))
 

@@ -25,6 +25,7 @@
            #:standard-lambda-list
            #:parse
            #:unparse
+           #:expand
            #:bind
 
            #:malformed-lambda-list
