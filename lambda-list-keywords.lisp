@@ -44,6 +44,8 @@
   (declare (ignore keys))
   name)
 
+(defgeneric section-class (object))
+
 (defclass fcll:standard-lambda-list-keyword (fcll:lambda-list-keyword parent-mixin defsys:name-mixin standard-inheritable-slots-object)
   ((%arity :initarg :arity
            :reader arity
@@ -65,6 +67,10 @@
                   :type (or function symbol)
                   :initform '%make-lambda-list-keyword-parser
                   :inherit t)
+   (%section-class :initarg :section-class
+                   :reader section-class
+                   :type class
+                   :inherit t)
    (%parser :reader parser
             :type function))
   (:metaclass standard-inheritable-slots-class))

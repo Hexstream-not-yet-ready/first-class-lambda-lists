@@ -2,16 +2,20 @@
 
 ;;; Lambda list keywords
 
-(define (fcll:lambda-list-keyword &whole) 1)
+(define (fcll:lambda-list-keyword &whole) 1
+        :section-class (find-class 'standard-&whole-section))
 
 (define (fcll:lambda-list-keyword :&environment-not-before-&whole) 1
-  :introducer '&environment)
+  :introducer '&environment
+  :section-class (find-class 'standard-&environment-section))
 
 (define (fcll:lambda-list-keyword :&environment-last) 1
-  :introducer '&environment)
+  :introducer '&environment
+  :section-class (find-class 'standard-&environment-section))
 
 (define (fcll:lambda-list-keyword :required) t
   :introducer nil
+  :section-class (find-class 'standard-required-section)
   :parameter-parser #'%parse-required-parameter
   :recursablep t)
 
@@ -20,33 +24,39 @@
   :parameter-parser #'%parse-specializable-parameter)
 
 (define (fcll:lambda-list-keyword &optional) t
-  :parameter-parser #'%parse-optional-parameter
-  :recursablep t)
+        :section-class (find-class 'standard-&optional-section)
+        :parameter-parser #'%parse-optional-parameter
+        :recursablep t)
 
 (define (fcll:lambda-list-keyword :&optional-no-defaulting) t
   :parent '&optional
   :parameter-parser #'%parse-optional-no-defaulting-parameter)
 
 (define (fcll:lambda-list-keyword &rest) 1
-  :recursablep t)
+        :section-class (find-class 'standard-&rest-section)
+        :recursablep t)
 
 (define (fcll:lambda-list-keyword &body) 1
-  :recursablep t)
+        :section-class (find-class 'standard-&rest-section)
+        :recursablep t)
 
 (define (fcll:lambda-list-keyword &key) t
-  :parameter-parser #'%parse-key-parameter
-  :recursablep t
-  :parser-maker '%make-&key-parser)
+        :section-class (find-class 'standard-&key-section)
+        :parameter-parser #'%parse-key-parameter
+        :recursablep t
+        :parser-maker '%make-&key-parser)
 
 (define (fcll:lambda-list-keyword :&key-no-defaulting) t
   :parent '&key
   :parser-maker '%make-lambda-list-keyword-parser
   :parameter-parser #'%parse-key-no-defaulting-parameter)
 
-(define (fcll:lambda-list-keyword &allow-other-keys) 0)
+(define (fcll:lambda-list-keyword &allow-other-keys) 0
+        :section-class (find-class 'subordinate-section))
 
 (define (fcll:lambda-list-keyword &aux) t
-  :parameter-parser #'%parse-aux-parameter)
+        :section-class (find-class 'standard-&aux-section)
+        :parameter-parser #'%parse-aux-parameter)
 
 
 
