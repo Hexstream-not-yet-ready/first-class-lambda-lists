@@ -73,6 +73,16 @@
    section
    form))
 
+(defmethod fcll:expand ((section standard-&rest-section) (expansion-env expansion-environment) form)
+  (%expand-parameters
+   (lambda (parameter form)
+     (let ((tail-var (tail-var expansion-env))
+           (variable (variable parameter)))
+       `(let ((,variable ,tail-var))
+          ,form)))
+   section
+   form))
+
 (defmethod fcll:expand ((section standard-&aux-section) (expansion-env expansion-environment) form)
   (%expand-parameters
    (lambda (parameter form)

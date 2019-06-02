@@ -226,6 +226,16 @@
     (is eq nil var6-supplied-p)
     (is eq nil var7)
     (is eq t var8))
+  (fcll:bind :ordinary (var1 &optional var2 &rest var3)
+      '(value1 value2 value3 value4 value5)
+    (is eq 'value1 var1)
+    (is eq 'value2 var2)
+    (is equal '(value3 value4 value5) var3))
+  (fcll:bind :ordinary (var1 &optional var2 &rest var3)
+      '(value1)
+    (is eq 'value1 var1)
+    (is eq nil var2)
+    (is eq nil var3))
 
   (define-test "inherit"
     :compile-at :execute
