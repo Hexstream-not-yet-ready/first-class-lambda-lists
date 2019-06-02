@@ -17,66 +17,72 @@
                                                     `(progn ,@body)))))
 
 
-;;; Parameters
-
-(defmethod fcll:expand ((parameter required-parameter) (expansion-env expansion-environment) form)
-  (let ((tail-var (tail-var expansion-env))
-        (var-or-lambda-list (variable parameter)))
-    (etypecase var-or-lambda-list
-      (symbol (let ((variable var-or-lambda-list))
-                `(let ((,variable (prog1 (car ,tail-var)
-                                    (setf ,tail-var (cdr ,tail-var)))))
-                   ,form)))
-      (fcll:lambda-list (let ((lambda-list var-or-lambda-list))
-                          (%expand-lambda-list lambda-list
-                                               `(prog1 (car ,tail-var)
-                                                  (setf ,tail-var (cdr ,tail-var)))
-                                               form))))))
-
-(defmethod fcll:expand ((parameter optional-parameter) (expansion-env expansion-environment) form)
-  (let ((tail-var (tail-var expansion-env))
-        (var-or-lambda-list (variable parameter))
-        (initform (initform parameter))
-        (suppliedp-variable (suppliedp-variable parameter)))
-    (etypecase var-or-lambda-list
-      (symbol (let ((variable var-or-lambda-list))
-                `(let (,@(when suppliedp-variable
-                               (list `(,suppliedp-variable (not (null ,tail-var)))))
-                       (,variable (if ,tail-var
-                                      (prog1 (car ,tail-var)
-                                        (setf ,tail-var (cdr ,tail-var)))
-                                      ,initform)))
-                   ,form)))
-      (fcll:lambda-list
-       (let ((lambda-list var-or-lambda-list))
-         (%expand-lambda-list lambda-list
-                              `(if ,tail-var
-                                   ,(if suppliedp-variable
-                                        `(car ,tail-var)
-                                        `(prog1 (car ,tail-var)
-                                           (setf ,tail-var (cdr ,tail-var))))
-                                   ,initform)
-                              (if suppliedp-variable
-                                  `(let ((,suppliedp-variable (prog1 (not (null ,tail-var))
-                                                                (setf ,tail-var (cdr ,tail-var)))))
-                                     ,form)
-                                  form)))))))
-
-(defmethod fcll:expand ((parameter aux-parameter) (expansion-env expansion-environment) form)
-  (let ((variable (variable parameter))
-        (initform (initform parameter)))
-    `(let ((,variable ,initform))
-       ,form)))
-
-
 ;;; Sections
 
-(defmethod fcll:expand ((section fcll:standard-lambda-list-section) (expansion-env expansion-environment) form)
-  (reduce (lambda (parameter form)
-            (fcll:expand parameter expansion-env form))
-          (parameters section)
-          :from-end t
-          :initial-value form))
+(defun %expand-parameters (expand-parameter section form)
+  (reduce expand-parameter (parameters section) :from-end t :initial-value form))
+
+(defmethod fcll:expand ((section standard-required-section) (expansion-env expansion-environment) form)
+  (%expand-parameters
+   (lambda (parameter form)
+     (let ((tail-var (tail-var expansion-env))
+           (var-or-lambda-list (variable parameter)))
+       (etypecase var-or-lambda-list
+         (symbol (let ((variable var-or-lambda-list))
+                   `(let ((,variable (prog1 (car ,tail-var)
+                                       (setf ,tail-var (cdr ,tail-var)))))
+                      ,form)))
+         (fcll:lambda-list (let ((lambda-list var-or-lambda-list))
+                             (%expand-lambda-list lambda-list
+                                                  `(prog1 (car ,tail-var)
+                                                     (setf ,tail-var (cdr ,tail-var)))
+                                                  form))))))
+   section
+   form))
+
+(defmethod fcll:expand ((section standard-&optional-section) (expansion-env expansion-environment) form)
+  (%expand-parameters
+   (lambda (parameter form)
+     (let ((tail-var (tail-var expansion-env))
+           (var-or-lambda-list (variable parameter))
+           (initform (initform parameter))
+           (suppliedp-variable (suppliedp-variable parameter)))
+       (etypecase var-or-lambda-list
+         (symbol (let ((variable var-or-lambda-list))
+                   `(let (,@(when suppliedp-variable
+                                  (list `(,suppliedp-variable (not (null ,tail-var)))))
+                          (,variable (if ,tail-var
+                                         (prog1 (car ,tail-var)
+                                           (setf ,tail-var (cdr ,tail-var)))
+                                         ,initform)))
+                      ,form)))
+         (fcll:lambda-list
+          (let ((lambda-list var-or-lambda-list))
+            (%expand-lambda-list lambda-list
+                                 `(if ,tail-var
+                                      ,(if suppliedp-variable
+                                           `(car ,tail-var)
+                                           `(prog1 (car ,tail-var)
+                                              (setf ,tail-var (cdr ,tail-var))))
+                                      ,initform)
+                                 (if suppliedp-variable
+                                     `(let ((,suppliedp-variable (prog1 (not (null ,tail-var))
+                                                                   (setf ,tail-var (cdr ,tail-var)))))
+                                        ,form)
+                                     form)))))))
+   section
+   form))
+
+(defmethod fcll:expand ((section standard-&aux-section) (expansion-env expansion-environment) form)
+  (%expand-parameters
+   (lambda (parameter form)
+     (let ((variable (variable parameter))
+           (initform (initform parameter)))
+       `(let ((,variable ,initform))
+          ,form)))
+   section
+   form))
+
 
 ;;; Lambda lists
 
