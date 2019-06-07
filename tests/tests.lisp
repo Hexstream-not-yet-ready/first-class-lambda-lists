@@ -236,6 +236,13 @@
     (is eq 'value1 required1)
     (is eq nil optional1)
     (is eq nil rest1))
+  (fcll:bind :ordinary (&key key1 key2 (key3 'initform1) (key4 'initform2 key4-supplied-p) &allow-other-keys)
+      '(:key5 value1 :key1 value2)
+    (is eq 'value2 key1)
+    (is eq nil key2)
+    (is eq 'initform1 key3)
+    (is eq 'initform2 key4)
+    (is eq nil key4-supplied-p))
 
   (define-test "inherit"
     :compile-at :execute

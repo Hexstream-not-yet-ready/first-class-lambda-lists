@@ -83,6 +83,90 @@
    section
    form))
 
+(defmacro while (condition &body body)
+  (let ((loop-tag (gensym (string '#:loop))))
+    `(block nil
+       (tagbody ,loop-tag
+          (unless ,condition
+            (return))
+          (progn ,@body)
+          (go ,loop-tag)))))
+
+(defun %process-keyword-args-strictly (plist values wanted)
+  (let ((also-accepted nil))
+    (declare (ignore also-accepted))
+    ;; TODO.
+    (%process-keyword-args-loosely plist values wanted)))
+
+(defun %pop-wanted-keyword (keyword wanted)
+  (let ((previous-cons wanted)
+        (current-cons (cdr wanted)))
+    (while current-cons
+      (let ((current (car current-cons))
+            (next-cons (cdr current-cons)))
+        (when (eq (car current) keyword)
+          (setf previous-cons next-cons)
+          (return (cdr current)))
+        (setf previous-cons current-cons
+              current-cons next-cons)))))
+
+(defun %process-keyword-args-loosely (plist values wanted)
+  (while (and plist (cdr wanted))
+    (let ((next-cons (cdr plist)))
+      (let ((indicator (car plist))
+            (value (car next-cons)))
+        (let ((index (%pop-wanted-keyword indicator wanted)))
+          (when index
+            (setf (svref values index) value))))
+      (setf plist (cdr next-cons)))))
+
+(defmethod fcll:expand ((section standard-&key-section) (expansion-env expansion-environment) form)
+  (let ((parameters (parameters section))
+        (tail-var (tail-var expansion-env))
+        (values-var (gensym (string '#:values_)))
+        (absent (gensym (string '#:absent_)))
+        (absentp-var nil)
+        (wanted-var (gensym (string '#:wanted_)))
+        (value-var (gensym (string '#:value_)))
+        (process-keyword-args (if (allow-other-keys-p section)
+                                  '%process-keyword-args-loosely
+                                  '%process-keyword-args-strictly)))
+    `(let ((,values-var (make-array ,(length parameters) :initial-element ',absent))
+           (,wanted-var (list :wanted ,@(mapcar (let ((i -1))
+                                                  (lambda (parameter)
+                                                    `'(,(keyword-name parameter) . ,(incf i))))
+                                                parameters))))
+       (declare (dynamic-extent ,values-var ,wanted-var))
+       (,process-keyword-args ,tail-var ,values-var ,wanted-var)
+       (let* (,@(mapcan (let ((i -1))
+                          (lambda (parameter)
+                            (let* ((suppliedp-variable (suppliedp-variable parameter))
+                                   (is-value-absent `(eq ,value-var ',absent))
+                                   (value-or-initform
+                                    `(if ,(if suppliedp-variable
+                                              `(setf ,(or absentp-var
+                                                          (setf absentp-var
+                                                                (gensym (string '#:absentp_))))
+                                                     ,is-value-absent)
+                                              is-value-absent)
+                                         ,(initform parameter)
+                                         ,value-var))
+                                   (get-value `(,value-var (svref ,values-var ,(incf i))))
+                                   (variable-binding
+                                    `(,(variable parameter)
+                                       ,(if suppliedp-variable
+                                            value-or-initform
+                                            `(let (,get-value)
+                                               ,value-or-initform)))))
+                              (if suppliedp-variable
+                                  `(,get-value
+                                    (,absentp-var ,is-value-absent)
+                                    ,variable-binding
+                                    (,suppliedp-variable (not ,absentp-var)))
+                                  (list variable-binding)))))
+                        parameters))
+         ,form))))
+
 (defmethod fcll:expand ((section standard-&aux-section) (expansion-env expansion-environment) form)
   (%expand-parameters
    (lambda (parameter form)
