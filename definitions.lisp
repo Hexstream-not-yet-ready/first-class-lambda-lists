@@ -1,5 +1,17 @@
 (in-package #:first-class-lambda-lists)
 
+;;; Lambda list keyword classes
+
+(define (fcll:lambda-list-keyword-class &whole))
+(define (fcll:lambda-list-keyword-class &environment))
+(define (fcll:lambda-list-keyword-class :required))
+(define (fcll:lambda-list-keyword-class &optional))
+(define (fcll:lambda-list-keyword-class &rest))
+(define (fcll:lambda-list-keyword-class &key))
+(define (fcll:lambda-list-keyword-class :subordinate))
+(define (fcll:lambda-list-keyword-class &aux))
+
+
 ;;; Lambda list keywords
 
 (define (fcll:lambda-list-keyword &whole) 1

@@ -4,8 +4,12 @@
   (:shadow #:variable #:lambda-list-keywords #:remove #:replace)
   (:import-from #:definitions-systems #:define)
   (:shadowing-import-from #:enhanced-eval-when #:eval-when)
-  (:export #:lambda-list-keyword
+  (:export #:lambda-list-keyword-class
+           #:standard-lambda-list-keyword-class
+
+           #:lambda-list-keyword
            #:standard-lambda-list-keyword
+
            #:lambda-list-section
            #:standard-lambda-list-section
 
@@ -23,6 +27,7 @@
 
            #:lambda-list
            #:standard-lambda-list
+
            #:parse
            #:unparse
            #:expand

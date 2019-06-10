@@ -17,6 +17,7 @@
 
                (:file "inherit")
 
+               (:file "lambda-list-keyword-classes")
                (:file "lambda-list-keywords")
                (:file "lambda-list-keywords-set")
                (:file "lambda-list-keyword-order")
