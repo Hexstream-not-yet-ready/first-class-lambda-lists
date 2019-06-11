@@ -7,17 +7,7 @@
           :type fcll:lambda-list-kind)
    (%sections :reader %sections
               :type list
-              :initform nil)
-   (%adjustable :type boolean)))
-
-(defmethod initialize-instance :before ((instance fcll:standard-lambda-list)
-                                        &key
-                                          (parse nil parse-supplied-p)
-                                          (adjustable (if parse-supplied-p nil t)))
-  (declare (ignore parse))
-  (check-type adjustable boolean)
-  (setf (slot-value instance '%adjustable)
-        adjustable))
+              :initform nil)))
 
 (defmethod shared-initialize :after ((instance fcll:standard-lambda-list) slot-names
                                      &key kind (parse nil parse-supplied-p))
