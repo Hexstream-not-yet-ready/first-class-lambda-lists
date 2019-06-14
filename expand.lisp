@@ -29,14 +29,10 @@
            (var-or-lambda-list (variable parameter)))
        (etypecase var-or-lambda-list
          (symbol (let ((variable var-or-lambda-list))
-                   `(let ((,variable (prog1 (car ,tail-var)
-                                       (setf ,tail-var (cdr ,tail-var)))))
+                   `(let ((,variable (pop ,tail-var)))
                       ,form)))
          (fcll:lambda-list (let ((lambda-list var-or-lambda-list))
-                             (%expand-lambda-list lambda-list
-                                                  `(prog1 (car ,tail-var)
-                                                     (setf ,tail-var (cdr ,tail-var)))
-                                                  form))))))
+                             (%expand-lambda-list lambda-list `(pop ,tail-var) form))))))
    section
    form))
 
@@ -52,8 +48,7 @@
                    `(let (,@(when suppliedp-variable
                                   (list `(,suppliedp-variable (not (null ,tail-var)))))
                           (,variable (if ,tail-var
-                                         (prog1 (car ,tail-var)
-                                           (setf ,tail-var (cdr ,tail-var)))
+                                         (pop ,tail-var)
                                          ,initform)))
                       ,form)))
          (fcll:lambda-list
@@ -62,12 +57,10 @@
                                  `(if ,tail-var
                                       ,(if suppliedp-variable
                                            `(car ,tail-var)
-                                           `(prog1 (car ,tail-var)
-                                              (setf ,tail-var (cdr ,tail-var))))
+                                           `(pop ,tail-var))
                                       ,initform)
                                  (if suppliedp-variable
-                                     `(let ((,suppliedp-variable (prog1 (not (null ,tail-var))
-                                                                   (setf ,tail-var (cdr ,tail-var)))))
+                                     `(let ((,suppliedp-variable (not (null (pop ,tail-var)))))
                                         ,form)
                                      form)))))))
    section
