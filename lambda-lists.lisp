@@ -29,11 +29,6 @@
             (defsys:name (kind lambda-list))
             (%sections lambda-list))))
 
-(defgeneric reset (object))
-
-(defmethod reset ((lambda-list fcll:standard-lambda-list))
-  (setf (slot-value lambda-list '%sections) nil))
-
 
 (defgeneric fcll:parse (lambda-list specification))
 
