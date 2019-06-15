@@ -16,6 +16,7 @@
   :components ((:file "package")
 
                (:file "inherit")
+               (:file "defsys")
 
                (:file "lambda-list-keyword-classes")
                (:file "lambda-list-keywords")

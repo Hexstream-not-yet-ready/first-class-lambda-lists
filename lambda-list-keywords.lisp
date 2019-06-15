@@ -1,35 +1,5 @@
 (in-package #:first-class-lambda-lists)
 
-(eval-when t
-
-  (defclass lambda-list-keyword-definitions (defsys:standard-system)
-    ())
-
-  (defvar *lambda-list-keyword-definitions*
-    (make-instance 'lambda-list-keyword-definitions :name 'fcll:lambda-list-keyword))
-
-  (setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-keyword)
-        *lambda-list-keyword-definitions*)
-
-  (defun %ensure-definition (definitions-system name definition-class &rest initargs)
-    (let ((existing (defsys:locate definitions-system name :errorp nil)))
-      (if existing
-          (apply #'reinitialize-instance existing initargs)
-          (setf (defsys:locate definitions-system name)
-                (apply #'make-instance definition-class
-                       :name name initargs)))))
-
-  (defun %ensure-lambda-list-keyword (name arity &rest initargs)
-    (apply #'%ensure-definition *lambda-list-keyword-definitions* name
-           'fcll:standard-lambda-list-keyword
-           :arity arity initargs))
-
-  (defmethod defsys:expand-definition ((system lambda-list-keyword-definitions) name environment arity-then-args &key)
-    (declare (ignore environment))
-    (destructuring-bind (arity &rest args) arity-then-args
-      `(%ensure-lambda-list-keyword ',name ,arity ,@args))))
-
-
 (defclass fcll:lambda-list-keyword () ())
 
 (defgeneric fcll:lambda-list-keyword (object))

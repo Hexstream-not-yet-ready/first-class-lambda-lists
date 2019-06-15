@@ -1,52 +1,5 @@
 (in-package #:first-class-lambda-lists)
 
-(eval-when t
-
-  (defclass lambda-list-kind-definitions (defsys:standard-system)
-    ())
-
-  (defvar *lambda-list-kind-definitions*
-    (make-instance 'lambda-list-kind-definitions :name 'fcll:lambda-list-kind))
-
-  (setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-kind)
-        *lambda-list-kind-definitions*)
-
-  (defun %ensure-lambda-list-kind (name operator raw-keywords-list &rest initargs)
-    (apply #'%ensure-definition *lambda-list-kind-definitions* name
-           'fcll:standard-lambda-list-kind
-           :operator operator :raw-keywords-list raw-keywords-list initargs))
-
-  (defun %derive-keywords-list (&key (from :ordinary) add remove replace)
-    (let ((from (and from (raw-keywords-list (lambda-list-kind from)))))
-      (multiple-value-call #'make-instance 'standard-raw-lambda-list-keywords-list
-                           :keywords-set (make-instance 'fcll:derived-lambda-list-keywords-set
-                                                        :keywords-set (and from (keywords-set from))
-                                                        :add add
-                                                        :remove remove
-                                                        :replace replace)
-                           (if from
-                               (values :keyword-order (keyword-order from)
-                                       :keyword-conflicts (keyword-conflicts from))
-                               (values)))))
-
-  (defmethod defsys:expand-definition ((system lambda-list-kind-definitions) name environment args &key)
-    (declare (ignore environment))
-    (destructuring-bind (operator keywords &rest args) args
-      (let ((keywords-list
-             (etypecase keywords
-               ((cons (eql :derive) list)
-                `(%derive-keywords-list ,@(mapcan (let ((processp t))
-                                                    (lambda (key value)
-                                                      (prog1 (when processp
-                                                               (list key `',value))
-                                                        (setf processp (not processp)))))
-                                                  (cdr keywords)
-                                                  (cddr keywords))))
-               (list
-                `(%derive-keywords-list :from nil :add ',keywords)))))
-        `(%ensure-lambda-list-kind ',name ',operator ,keywords-list ,@args)))))
-
-
 (defclass fcll:lambda-list-kind () ())
 
 (defgeneric fcll:lambda-list-kind (object))
