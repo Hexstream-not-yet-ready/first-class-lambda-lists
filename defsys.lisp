@@ -1,5 +1,14 @@
 (in-package #:first-class-lambda-lists)
 
+(defun %ensure-definition (definitions-system name definition-class &rest initargs)
+  (let ((existing (defsys:locate definitions-system name :errorp nil)))
+    (if existing
+        (apply #'reinitialize-instance existing initargs)
+        (setf (defsys:locate definitions-system name)
+              (apply #'make-instance definition-class
+                     :name name initargs)))))
+
+
 ;;; Lambda list keyword classes
 
 (defclass lambda-list-keyword-class-definitions (defsys:standard-system)
@@ -31,14 +40,6 @@
 
 (setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-keyword)
       *lambda-list-keyword-definitions*)
-
-(defun %ensure-definition (definitions-system name definition-class &rest initargs)
-  (let ((existing (defsys:locate definitions-system name :errorp nil)))
-    (if existing
-        (apply #'reinitialize-instance existing initargs)
-        (setf (defsys:locate definitions-system name)
-              (apply #'make-instance definition-class
-                     :name name initargs)))))
 
 (defun %ensure-lambda-list-keyword (name arity &rest initargs)
   (apply #'%ensure-definition *lambda-list-keyword-definitions* name
