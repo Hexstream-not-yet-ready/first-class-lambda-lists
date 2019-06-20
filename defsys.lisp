@@ -1,14 +1,5 @@
 (in-package #:first-class-lambda-lists)
 
-(defun %ensure-definition (definitions-system name definition-class &rest initargs)
-  (let ((existing (defsys:locate definitions-system name :errorp nil)))
-    (if existing
-        (apply #'reinitialize-instance existing initargs)
-        (setf (defsys:locate definitions-system name)
-              (apply #'make-instance definition-class
-                     :name name initargs)))))
-
-
 ;;; Lambda list keyword classes
 
 (defclass lambda-list-keyword-class-definitions (defsys:standard-system)
@@ -20,14 +11,9 @@
 (setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-keyword-class)
       *lambda-list-keyword-class-definitions*)
 
-(defun %ensure-lambda-list-keyword-class (name &rest initargs)
-  (apply #'%ensure-definition *lambda-list-keyword-class-definitions* name
-         'fcll:standard-lambda-list-keyword-class
-         initargs))
-
 (defmethod defsys:expand-definition ((system lambda-list-keyword-class-definitions) name environment args &key)
   (declare (ignore environment))
-  `(%ensure-lambda-list-keyword-class ',name ,@args))
+  `(defsys:ensure ',(defsys:name system) ',name 'fcll:standard-lambda-list-keyword-class ,@args))
 
 
 ;;; Lambda list keywords
@@ -41,15 +27,10 @@
 (setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-keyword)
       *lambda-list-keyword-definitions*)
 
-(defun %ensure-lambda-list-keyword (name arity &rest initargs)
-  (apply #'%ensure-definition *lambda-list-keyword-definitions* name
-         'fcll:standard-lambda-list-keyword
-         :arity arity initargs))
-
 (defmethod defsys:expand-definition ((system lambda-list-keyword-definitions) name environment arity-then-args &key)
   (declare (ignore environment))
   (destructuring-bind (arity &rest args) arity-then-args
-    `(%ensure-lambda-list-keyword ',name ,arity ,@args)))
+    `(defsys:ensure ',(defsys:name system) ',name 'fcll:standard-lambda-list-keyword :arity ,arity ,@args)))
 
 
 ;;; Lambda list keyword order
@@ -63,15 +44,10 @@
 (setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-keyword-order)
       *lambda-list-keyword-order-definitions*)
 
-(defun %ensure-lambda-list-keyword-order (name specification)
-  (%ensure-definition *lambda-list-keyword-order-definitions* name
-                      'fcll:standard-lambda-list-keyword-order
-                      :specification specification))
-
 (defmethod defsys:expand-definition ((system lambda-list-keyword-order-definitions) name environment args &key)
   (declare (ignore environment))
   (destructuring-bind (specification) args
-    `(%ensure-lambda-list-keyword-order ',name ',specification)))
+    `(defsys:ensure ',(defsys:name system) ',name 'fcll:standard-lambda-list-keyword-order :specification ',specification)))
 
 
 ;;; Lambda list keyword conflicts
@@ -85,15 +61,10 @@
 (setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-keyword-conflicts)
       *lambda-list-keyword-conflicts-definitions*)
 
-(defun %ensure-lambda-list-keyword-conflicts (name specification)
-  (%ensure-definition *lambda-list-keyword-conflicts-definitions* name
-                      'fcll:standard-lambda-list-keyword-conflicts
-                      :specification specification))
-
 (defmethod defsys:expand-definition ((system lambda-list-keyword-conflicts-definitions) name environment args &key)
   (declare (ignore environment))
   (destructuring-bind (specification) args
-    `(%ensure-lambda-list-keyword-conflicts ',name ',specification)))
+    `(defsys:ensure ',(defsys:name system) ',name 'fcll:standard-lambda-list-keyword-conflicts :specification ',specification)))
 
 
 ;;; Lambda list kinds
@@ -106,11 +77,6 @@
 
 (setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-kind)
       *lambda-list-kind-definitions*)
-
-(defun %ensure-lambda-list-kind (name operator raw-keywords-list &rest initargs)
-  (apply #'%ensure-definition *lambda-list-kind-definitions* name
-         'fcll:standard-lambda-list-kind
-         :operator operator :raw-keywords-list raw-keywords-list initargs))
 
 (defun %derive-keywords-list (&key (from :ordinary) add remove replace)
   (let ((from (and from (raw-keywords-list (lambda-list-kind from)))))
@@ -140,4 +106,5 @@
                                                 (cddr keywords))))
              (list
               `(%derive-keywords-list :from nil :add ',keywords)))))
-      `(%ensure-lambda-list-kind ',name ',operator ,keywords-list ,@args))))
+      `(defsys:ensure ',(defsys:name system) ',name 'fcll:standard-lambda-list-kind
+                      :operator ',operator :raw-keywords-list ,keywords-list ,@args))))
