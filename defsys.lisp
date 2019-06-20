@@ -5,11 +5,8 @@
 (defclass lambda-list-keyword-class-definitions (defsys:standard-system)
   ())
 
-(defvar *lambda-list-keyword-class-definitions*
-  (make-instance 'lambda-list-keyword-class-definitions :name 'fcll:lambda-list-keyword-class))
-
-(setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-keyword-class)
-      *lambda-list-keyword-class-definitions*)
+(define (defsys:system fcll:lambda-list-keyword-class)
+  lambda-list-keyword-class-definitions)
 
 (defmethod defsys:expand-definition ((system lambda-list-keyword-class-definitions) name environment args &key)
   (declare (ignore environment))
@@ -21,11 +18,8 @@
 (defclass lambda-list-keyword-definitions (defsys:standard-system)
   ())
 
-(defvar *lambda-list-keyword-definitions*
-  (make-instance 'lambda-list-keyword-definitions :name 'fcll:lambda-list-keyword))
-
-(setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-keyword)
-      *lambda-list-keyword-definitions*)
+(define (defsys:system fcll:lambda-list-keyword)
+  lambda-list-keyword-definitions)
 
 (defmethod defsys:expand-definition ((system lambda-list-keyword-definitions) name environment arity-then-args &key)
   (declare (ignore environment))
@@ -38,11 +32,8 @@
 (defclass lambda-list-keyword-order-definitions (defsys:standard-system)
   ())
 
-(defvar *lambda-list-keyword-order-definitions*
-  (make-instance 'lambda-list-keyword-order-definitions :name 'fcll:lambda-list-keyword-order))
-
-(setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-keyword-order)
-      *lambda-list-keyword-order-definitions*)
+(define (defsys:system fcll:lambda-list-keyword-order)
+  lambda-list-keyword-order-definitions)
 
 (defmethod defsys:expand-definition ((system lambda-list-keyword-order-definitions) name environment args &key)
   (declare (ignore environment))
@@ -55,11 +46,8 @@
 (defclass lambda-list-keyword-conflicts-definitions (defsys:standard-system)
   ())
 
-(defvar *lambda-list-keyword-conflicts-definitions*
-  (make-instance 'lambda-list-keyword-conflicts-definitions :name 'fcll:lambda-list-keyword-conflicts))
-
-(setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-keyword-conflicts)
-      *lambda-list-keyword-conflicts-definitions*)
+(define (defsys:system fcll:lambda-list-keyword-conflicts)
+  lambda-list-keyword-conflicts-definitions)
 
 (defmethod defsys:expand-definition ((system lambda-list-keyword-conflicts-definitions) name environment args &key)
   (declare (ignore environment))
@@ -72,11 +60,8 @@
 (defclass lambda-list-kind-definitions (defsys:standard-system)
   ())
 
-(defvar *lambda-list-kind-definitions*
-  (make-instance 'lambda-list-kind-definitions :name 'fcll:lambda-list-kind))
-
-(setf (defsys:locate (defsys:root-system) 'fcll:lambda-list-kind)
-      *lambda-list-kind-definitions*)
+(define (defsys:system fcll:lambda-list-kind)
+  lambda-list-kind-definitions)
 
 (defun %derive-keywords-list (&key (from :ordinary) add remove replace)
   (let ((from (and from (raw-keywords-list (lambda-list-kind from)))))

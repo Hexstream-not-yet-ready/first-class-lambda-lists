@@ -13,7 +13,7 @@
                                      &key kind (parse nil parse-supplied-p))
   (declare (ignore slot-names))
   (setf (slot-value instance '%kind)
-        (defsys:locate *lambda-list-kind-definitions* kind))
+        (defsys:locate 'fcll:lambda-list-kind kind))
   (when parse-supplied-p
     (fcll:parse instance parse)))
 
@@ -40,7 +40,7 @@
            (funcall (parser (kind lambda-list)) specification)))))
 
 (defmethod fcll:parse ((kind symbol) specification)
-  (fcll:parse (defsys:locate *lambda-list-kind-definitions* kind)
+  (fcll:parse (defsys:locate 'fcll:lambda-list-kind kind)
               specification))
 
 (defmethod fcll:parse ((kind fcll:lambda-list-kind) specification)

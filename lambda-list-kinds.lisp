@@ -8,7 +8,7 @@
   kind)
 
 (defmethod fcll:lambda-list-kind ((name symbol))
-  (defsys:locate *lambda-list-kind-definitions* name))
+  (defsys:locate 'fcll:lambda-list-kind name))
 
 (defmethod defsys:locate ((system lambda-list-kind-definitions) (name fcll:lambda-list-kind) &rest keys)
   (declare (ignore keys))

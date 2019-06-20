@@ -8,7 +8,7 @@
   lambda-list-keyword)
 
 (defmethod fcll:lambda-list-keyword ((name symbol))
-  (defsys:locate *lambda-list-keyword-definitions* name))
+  (defsys:locate 'fcll:lambda-list-keyword name))
 
 (defmethod defsys:locate ((system lambda-list-keyword-definitions) (name fcll:lambda-list-keyword) &rest keys)
   (declare (ignore keys))
