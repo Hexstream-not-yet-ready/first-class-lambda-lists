@@ -242,35 +242,4 @@
     (is eq nil key2)
     (is eq 'initform1 key3)
     (is eq 'initform2 key4)
-    (is eq nil key4-supplied-p))
-
-  (define-test "inherit"
-    :compile-at :execute
-    (defclass test-inheritable-slots-class (fcll::standard-inheritable-slots-object)
-      ((%parent :initarg :parent
-                :reader parent
-                :initform nil)
-       (%a :initarg :a
-           :reader a
-           :inherit t
-           :initform 'default)
-       (%b :initarg :b
-           :reader b
-           :inherit t)
-       (%c :initarg :c
-           :reader c))
-      (:metaclass fcll::standard-inheritable-slots-class))
-    (defmethod fcll::slot-inherited-value-using-class ((class fcll::standard-inheritable-slots-class)
-                                                       (object test-inheritable-slots-class)
-                                                       slot)
-      (let ((parent (parent object)))
-        (if parent
-            (values (slot-value parent (c2mop:slot-definition-name slot))
-                    t)
-            (values nil nil))))
-    (let ((root (make-instance 'test-inheritable-slots-class :b 'b-value)))
-      (are equal '(default b-value nil)
-           (values (a root) (b root) (slot-boundp root '%c)))
-      (let ((child (make-instance 'test-inheritable-slots-class :parent root)))
-        (are equal '(default b-value nil)
-             (values (a child) (b child) (slot-boundp child '%c)))))))
+    (is eq nil key4-supplied-p)))

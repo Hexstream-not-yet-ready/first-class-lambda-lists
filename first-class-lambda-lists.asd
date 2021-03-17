@@ -7,14 +7,12 @@
   :description "Provides a simple unified extensible way of processing lambda lists."
 
   :depends-on ("definitions-systems"
-               "enhanced-eval-when"
-               "closer-mop")
+               "enhanced-eval-when")
 
   :version "0.1"
   :serial cl:t
   :components ((:file "package")
 
-               (:file "inherit")
                (:file "defsys")
 
                (:file "lambda-list-keyword-classes")
