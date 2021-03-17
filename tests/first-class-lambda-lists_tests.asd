@@ -1,9 +1,8 @@
 (asdf:defsystem #:first-class-lambda-lists_tests
 
-  :author "Jean-Philippe Paradis <hexstream@gmail.com>"
+  :author "Jean-Philippe Paradis <hexstream@hexstreamsoft.com>"
 
-  ;; See the UNLICENSE file for details.
-  :license "Public Domain"
+  :license "Unlicense"
 
   :description "first-class-lambda-lists unit tests."
 
