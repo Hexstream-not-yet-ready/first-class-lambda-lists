@@ -84,6 +84,7 @@
                   :&environment-last)
             :&environment-not-before-&whole)))
 
+
 ;;; Lambda list keyword conflicts
 
 (define (fcll:lambda-list-keyword-conflicts :standard)
@@ -92,38 +93,51 @@
 
 ;;; Lambda list kinds
 
-(define (fcll:lambda-list-kind :ordinary) defun
-  (:required &optional &rest &key &aux)) ;&allow-other-keys is subordinate to &key, so implied by it.
+(define (fcll:lambda-list-kind :ordinary)
+  defun
+  ((make-instance 'standard-raw-lambda-list-core
+                  :keywords-set (make-instance 'fcll:derived-lambda-list-keywords-set
+                                               ;; &allow-other-keys is subordinate to &key, so implied by it.
+                                               :add '(:required &optional &rest &key &aux))
+                  :keyword-order (defsys:locate 'fcll:lambda-list-keyword-order :standard)
+                  :keyword-conflicts (defsys:locate 'fcll:lambda-list-keyword-conflicts :standard))))
 
-(define (fcll:lambda-list-kind :generic-function) defgeneric
-  (:derive :replace ((&optional :&optional-no-defaulting)
-                     (&key :&key-no-defaulting))
-           :remove &aux))
+(define (fcll:lambda-list-kind :generic-function)
+  defgeneric
+  ((:derive :replace ((&optional :&optional-no-defaulting)
+                      (&key :&key-no-defaulting))
+            :remove &aux)))
 
-(define (fcll:lambda-list-kind :specialized) defmethod
-  (:derive :replace ((:required :required-specializable))))
+(define (fcll:lambda-list-kind :specialized)
+  defmethod
+  ((:derive :replace ((:required :required-specializable)))))
 
-(define (fcll:lambda-list-kind :destructuring) destructuring-bind
-  (:derive :add (&whole &body))
-  :recurse t)
+(define (fcll:lambda-list-kind :destructuring)
+  destructuring-bind
+  ((:derive :add (&whole &body))
+   :recurse :destructuring))
 
-(define (fcll:lambda-list-kind :macro) defmacro
-  (:derive :from :destructuring :add :&environment-not-before-&whole)
-  :recurse :destructuring)
+(define (fcll:lambda-list-kind :macro)
+  defmacro
+  ((:derive :from :destructuring :add :&environment-not-before-&whole)))
 
-(define (fcll:lambda-list-kind :boa) defstruct
-  (:derive))
+(define (fcll:lambda-list-kind :boa)
+  defstruct
+  ((:derive)))
 
-(define (fcll:lambda-list-kind :defsetf) defsetf
-  (:derive :add :&environment-last :remove &aux))
+(define (fcll:lambda-list-kind :defsetf)
+  defsetf
+  ((:derive :add :&environment-last :remove &aux)))
 
-(define (fcll:lambda-list-kind :deftype) deftype
-  (:derive :from :macro)
-  :recurse :destructuring
-  :default-initform ''*)
+(define (fcll:lambda-list-kind :deftype)
+  deftype
+  ((:derive :from :macro)
+   :default-initform ''*))
 
-(define (fcll:lambda-list-kind :define-modify-macro) define-modify-macro
-  (:derive :remove (&key &aux)))
+(define (fcll:lambda-list-kind :define-modify-macro)
+  define-modify-macro
+  ((:derive :remove (&key &aux))))
 
-(define (fcll:lambda-list-kind :define-method-combination-arguments) define-method-combination
-  (:derive :add &whole))
+(define (fcll:lambda-list-kind :define-method-combination-arguments)
+  define-method-combination
+  ((:derive :add &whole)))

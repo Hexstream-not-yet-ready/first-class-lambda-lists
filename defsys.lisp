@@ -63,33 +63,26 @@
 (define (defsys:system fcll:lambda-list-kind)
   lambda-list-kind-definitions)
 
-(defun %derive-keywords-list (&key (from :ordinary) add remove replace)
-  (let ((from (and from (raw-keywords-list (lambda-list-kind from)))))
-    (multiple-value-call #'make-instance 'standard-raw-lambda-list-keywords-list
-                         :keywords-set (make-instance 'fcll:derived-lambda-list-keywords-set
-                                                      :keywords-set (and from (keywords-set from))
-                                                      :add add
-                                                      :remove remove
-                                                      :replace replace)
-                         (if from
-                             (values :keyword-order (keyword-order from)
-                                     :keyword-conflicts (keyword-conflicts from))
-                             (values)))))
+(defun %mappcon (function plist)
+  (mapcan (let ((processp t))
+            (lambda (key value)
+              (prog1 (when processp
+                       (funcall function key value))
+                (setf processp (not processp)))))
+          (cdr plist)
+          (cddr plist)))
 
 (defmethod defsys:expand-definition ((system lambda-list-kind-definitions) name environment args &key)
   (declare (ignore environment))
-  (destructuring-bind (operator keywords &rest args) args
-    (let ((keywords-list
-           (etypecase keywords
-             ((cons (eql :derive) list)
-              `(%derive-keywords-list ,@(mapcan (let ((processp t))
-                                                  (lambda (key value)
-                                                    (prog1 (when processp
-                                                             (list key `',value))
-                                                      (setf processp (not processp)))))
-                                                (cdr keywords)
-                                                (cddr keywords))))
-             (list
-              `(%derive-keywords-list :from nil :add ',keywords)))))
+  (destructuring-bind (operator core &rest args) args
+    (let ((core
+           (if (typep core '(cons (eql :derive) list))
+               `(make-instance 'derived-raw-lambda-list-core
+                               ,@(%mappcon (lambda (key value)
+                                             (list key (case key
+                                                         ((:add :remove :replace) `',value)
+                                                         (t value))))
+                                           core))
+               core)))
       `(defsys:ensure ',(defsys:name system) ',name 'fcll:standard-lambda-list-kind
-                      :operator ',operator :raw-keywords-list ,keywords-list ,@args))))
+                      :operator ',operator :raw-core ,core ,@args))))

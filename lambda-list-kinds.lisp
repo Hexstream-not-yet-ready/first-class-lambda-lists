@@ -17,12 +17,12 @@
 (defclass fcll:standard-lambda-list-kind (fcll:lambda-list-kind defsys:name-mixin)
   ((%operator :initarg :operator
               :reader operator)
-   (%raw-keywords-list :initarg :raw-keywords-list
-                       :reader raw-keywords-list
-                       :type raw-lambda-list-keywords-list)
-   (%keywords-list :initarg :keywords-list
-                   :reader keywords-list
-                   :type coherent-lambda-list-keywords-list)
+   (%raw-core :initarg :raw-core
+              :reader raw-core
+              :type raw-lambda-list-core)
+   (%core :initarg :core
+          :reader core
+          :type coherent-lambda-list-core)
    (%recurse :initarg :recurse ;Canonicalized in (shared-initialize :around).
              :reader recurse
              :type (or null fcll:lambda-list-kind)
@@ -32,17 +32,23 @@
                       :initform nil)
    (%parser :reader parser)))
 
-(defclass effective-lambda-list-keywords-list (coherent-lambda-list-keywords-list)
+(defmethod raw-lambda-list-core ((lambda-list-kind fcll:standard-lambda-list-kind))
+  (raw-core lambda-list-kind))
+
+(defmethod raw-lambda-list-core ((lambda-list-kind-name symbol))
+  (raw-lambda-list-core (fcll:lambda-list-kind lambda-list-kind-name)))
+
+(defclass effective-lambda-list-core (coherent-lambda-list-core)
   ())
 
-(defclass standard-effective-lambda-list-keywords-list (effective-lambda-list-keywords-list
-                                                        mapped-lambda-list-keywords-list)
+(defclass standard-effective-lambda-list-core (effective-lambda-list-core
+                                               mapped-lambda-list-core)
   ())
 
-(defmethod shared-initialize :after ((keywords-list standard-effective-lambda-list-keywords-list) slot-names &key)
+(defmethod shared-initialize :after ((core standard-effective-lambda-list-core) slot-names &key)
   (declare (ignore slot-names))
-  (let ((keyword-conflicts (tree (keyword-conflicts keywords-list))))
-    (dolist (lambda-list-keyword (lambda-list-keywords (keywords-set keywords-list)))
+  (let ((keyword-conflicts (tree (keyword-conflicts core))))
+    (dolist (lambda-list-keyword (lambda-list-keywords (keywords-set core)))
       (setf (slot-value lambda-list-keyword '%conflicts-with)
             (and keyword-conflicts
                  (labels ((recurse (spec)
@@ -188,7 +194,7 @@
 
 (defvar *parse-recursable-variable*)
 
-(defun %make-parser (keywords-list parse-recursable-variable)
+(defun %make-parser (core parse-recursable-variable)
   (let ((parser-maker
          (labels ((recurse (spec &optional backtrackp)
                     (etypecase spec
@@ -199,7 +205,7 @@
                                 (or (%make-or-processor-maker #'recurse args)))))
                       (fcll:lambda-list-keyword
                        (%make-keyword-processor-maker spec backtrackp)))))
-           (recurse (tree (keyword-order keywords-list))))))
+           (recurse (tree (keyword-order core))))))
     (lambda (tail)
       (let ((*sections* nil)
             (*%malformed-lambda-list*
@@ -217,20 +223,20 @@
                 (%malformed-lambda-list 'simple-malformed-lambda-list-error
                                         :tail new-tail
                                         :format-control "Could not completely parse lambda list.~@
-                                                         donep: ~S~%sections: ~S"
-                                        :format-arguments (list donep sections))
+                                                         donep: ~S~%sections: ~S~%tail: ~S"
+                                        :format-arguments (list donep sections new-tail))
                 sections)))))))
 
 (defmethod shared-initialize :around ((kind fcll:standard-lambda-list-kind) slot-names
                                       &rest initargs &key
-                                                       (raw-keywords-list nil raw-keywords-list-p)
+                                                       (raw-core nil raw-core-p)
                                                        (recurse nil recurse-p))
   (let ((canonicalized
          (nconc
-          (when raw-keywords-list-p
-            (list :keywords-list
-                  (make-instance 'standard-effective-lambda-list-keywords-list
-                                 :keywords-list (coherent-lambda-list-keywords-list raw-keywords-list)
+          (when raw-core-p
+            (list :core
+                  (make-instance 'standard-effective-lambda-list-core
+                                 :core (coherent-lambda-list-core raw-core)
                                  :mapper (lambda (parent)
                                            (make-instance 'standard-effective-lambda-list-keyword
                                                           :name (defsys:name parent)
@@ -247,8 +253,8 @@
 (defmethod shared-initialize :after ((kind fcll:standard-lambda-list-kind) slot-names &key)
   (declare (ignore slot-names))
   (setf (slot-value kind '%parser)
-        (let ((keywords-list (keywords-list kind)))
-          (%make-parser keywords-list
+        (let ((core (core kind)))
+          (%make-parser core
                         (let ((recursive-lambda-list-kind (recurse kind)))
                           (if recursive-lambda-list-kind
                               (lambda (variable)

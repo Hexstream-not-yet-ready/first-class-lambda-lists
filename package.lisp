@@ -22,6 +22,8 @@
            #:lambda-list-keyword-conflicts
            #:standard-lambda-list-keyword-conflicts
 
+           #:lambda-list-keywords-list
+
            #:lambda-list-kind
            #:standard-lambda-list-kind
 
